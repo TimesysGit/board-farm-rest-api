@@ -23,3 +23,19 @@ This project is to create standard APIs between automated tests and board farm m
 ## REST APIs
 
 ### GPIO API
+
+**Endpoint URI**
+```
+http(s)//bfc.timesys.com/api/{DeviceName}/gpio/{gpio_command}/{gpio_pin_pattern(location)}/{gpio_pin_data}
+```
+
+Method | GPIO Command | HTTP request 
+------------ | ------------- | -------------
+get | set_mode | GET /api/{DeviceName}/gpio/set_mode/{gpio_pin_number}/{write/read} 
+get | get_mode | GET /api/{DeviceName}/gpio/get_mode/{gpio_pin_number} 
+get | write | GET /api/{DeviceName}/gpio/write/{gpio_pin_number}/{0/1} 
+get | read | GET /api/{DeviceName}/gpio/read/{gpio_pin_number} 
+get | set_mode_mask | GET /api/{DeviceName}/gpio/set_mode_mask/{Lab pin locations pattern mask}/{0-255} 
+get | get_mode_mask | GET /api/{DeviceName}/gpio/get_mode_mask/{Lab pin locations pattern mask} 
+get | write_mask | GET /api/{DeviceName}/gpio/write_mask/{Lab pin locations pattern mask}/{0-255} 
+get | read_mask | GET /api/{DeviceName}/gpio/read_mask/{Lab pin locations pattern mask} 
