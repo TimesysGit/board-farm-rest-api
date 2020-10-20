@@ -99,9 +99,9 @@ paths:
                     type: integer
 ```
 
-**TODOs**
+**TO Be Defined**
 - [ ] Error codes
-- [ ] Standardize error messages
+- [ ] Error conditions and standardized error messages
 
 ## Using EBF cli tool
 
