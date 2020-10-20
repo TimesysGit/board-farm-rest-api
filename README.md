@@ -33,7 +33,7 @@ Parameter | Type | Description
 DeviceName | String | Name of device in Board Farm
 gpio_command | String | Any GPIO command supported by the API
 gpio_pin_pattern(location) | Integer | GPIO Pin number or pattern mask 
-gpio_pin_data | Integer/String | GPIO Pin mode or set value for GPIO pin commands and mode mask and mask patterns in GPIO mask commands 
+gpio_pin_data | Integer/String | For GPIO pin commands - GPIO Pin mode or set value. For GPIO mask commands - mode mask and mask patterns.
 
 Method | GPIO Command | HTTP request 
 ------------ | ------------- | -------------
