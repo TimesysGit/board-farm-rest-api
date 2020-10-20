@@ -44,21 +44,21 @@ get | read_mask | GET /api/{DeviceName}/gpio/read_mask/{Lab pin locations patter
 **Format**
 Each response is a JSON object. 
 
-**Success Response(example)**
-```
-{"result": "success", "data": 255}
-```
-
-**Error Response(example)**
-```
-{"result": "fail", "message": "One or more GPIO pins being written to is in input mode."}
-```
-
 **result** (string) - success/fail
 
 **data** (integer/string) - GPIO command dependent - OPTIONAL
 
 **message** (string) - GPIO command failure reason when result is a fail - OPTIONAL
+
+**Success Response (example)**
+```
+{"result": "success", "data": 255}
+```
+
+**Error Response (example)**
+```
+{"result": "fail", "message": "One or more GPIO pins being written to is in input mode."}
+```
 
 **OpenAPI specification**
 
