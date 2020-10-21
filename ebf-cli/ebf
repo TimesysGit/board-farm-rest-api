@@ -293,10 +293,6 @@ function user_authentication() {
       read -r -p "Provide the EBF UserName >> " USER_NAME
       read -r -p "Provide the EBF User Password >> " PASSWORD
     fi
-    #SERVER_URL="https://172.16.30.65"
-    #SERVER_URL="http://172.16.2.63"
-    #USER_NAME="ankit.gupta"
-    #PASSWORD="time123"
     if [[ "${USER_NAME}" != "" && "${PASSWORD}" != "" && "{$SERVER_URL}" != "" ]];then
       OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/token/"  --header 'Content-Type: application/json' --data-raw '{"username":"'"$USER_NAME"'" , "password":"'"$PASSWORD"'"}')
       AUTH_TOKEN=$(echo $OUTPUT|jq -r .token)
