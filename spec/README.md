@@ -135,13 +135,13 @@ An authorization token is passed in the request header, and the data
 from the response is stored in the OUTPUT shell variable.  Then
 individual elements from the OUTPUT are parsed using 'jq'.  In this
 case, the output is parsed into a list.  Other times, jq is used to
-parse individual fields of returned data, like the following:
+parse individual fields from the returned data, like the following:
 
 ```
 RESULT=$(echo $OUTPUT|jq -r .result)
 MESSAGE=$(echo $OUTPUT|jq -r .message)
 ```
-The set of different operation currently supported by 'ebf' is listed
+The set of different operations currently supported by 'ebf' is listed
 below, with redundant information removed:
 
 #### Authentication:
@@ -197,12 +197,13 @@ and other interactions with the boards in their lab.
 Work is ongoing to identify non-neutral APIs and decide how to either
 generalize or isolate them.
 
+FIXTHIS - wish I knew what OPTION4 was here
+
 #### Zombie control and port forwarding:
  * GET  api/v0.2/devices/$DEVICE/portfw/$OPTION4/
 
  * POST api/v0.2/zombies/$ZOMBIE_NAME/portforward/nat/"  '' --data-raw '{ "device_ip":"'"$DEVICE_IP"'", "dut_port":"'"$DUT_PORT"'", "zombie_port":"'"$ZOMBIE_PORT"'", "pcol":"'"$PROTOCOL"'" }'
  * POST api/v0.2/devices/$DEVICE/portfw/ssh/"  '' --data-raw '{ "dut_ip":"'"$DEVICE_IP"'", "username":"'"$USERNAME"'", "dut_pw":"'"$PASSWORD"'", "dut_port":"'"$DUT_PORT"'", "zombie_port":"'"$ZOMBIE_PORT"'" }'
- * GET api/v0.2/devices/$DEVICE/portfw/$OPTION4/"  ''
  * DELETE /api/v0.2/devices/$DEVICE/portfw/$OPTION4/"  '' --data-raw '{ "device_ip":"'"$DEVICE_IP"'", "dut_port":"'"$DUT_PORT"'", "zombie_port":"'"$ZOMBIE_PORT"'", "pcol":"'"$PROTOCOL"'" }'
  * DELETE /api/v0.2/zombies/$ZOMBIE_NAME/portforward/ssh/?ports=$ZOMBIE_PORT/"
 
