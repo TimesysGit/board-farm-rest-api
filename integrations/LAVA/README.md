@@ -67,6 +67,20 @@ Below new GPIO API definitions were introduced under lava/lava_rest_app/v02/view
                 )
 ```
 
+Where **http://<lab_controller>/api/gpio** is the Lab dependent(South-bound) API running on Lab infrastrucute
+
+```
+url = "http://%s/api/gpio" % ts_device.zombie.ip
+info = {
+    "interface": interface,
+    "device_num": ts_device.device_port,
+    "command": command,
+    "gpio_pins": gpio_pins,
+    "gpio_data": gpio_data,
+}
+response = requests.post(url, json=info)
+
+```
 
 
 
