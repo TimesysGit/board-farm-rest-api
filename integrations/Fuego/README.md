@@ -122,36 +122,38 @@ up a remote board for inclusion in a Fuego lab.
 
 In order to use Fuego with ebf and the board farm API, you need to
 create a Fuego board definition for the remote board. Do this by
-creating a board file as usual (located a fuego-ro/boards), and then add
-the additional lines to the file inside the Fuego docker container.  Here
-are the lines for the raspi4_gpio board in the TimeSys lab, configured
-as proxy board 'rp4' in Tim's Fuego system:
+creating a board file as usual (in the directory fuego-ro/boards), and
+then add the additional lines to the file inside the Fuego docker
+container.  Here are the lines for the 'raspi4_gpio' board in the TimeSys
+lab, configured as proxy board 'rp4' in Tim's Fuego system:
 
+```
 TRANSPORT=ttc
 BOARD_CONTROL=ttc
 TTC_TARGET=rp4
 LAB_SERVER=bfc.timesys.gpio
 LAB_BOARD_NAME=raspi4_gpio
+```
 
-With these settings in the Fuego board file and in ttc.conf and
-in the .ebfconfig file, the remote board is now fully defined in Fuego.
+With these settings in the Fuego board file and with the configurtion
+described for ttc.conf and with the .ebfconfig file set up and
+configured as an authenticated user, the remote board is now fully
+defined in Fuego.
 
 
 ## Fuego test integration
 
-Besides Fuego core, the test themselves need to support use
-of the board farm REST API, in order to operate in a lab-independent
-fashion.
+Besides Fuego core, the test themselves need to support use of the board
+farm REST API, in order to operate in a lab-independent fashion.
 
-Test can use the REST API to control other hardware in the lab
-during the test.  However, before doing this, the test needs
-to know the lab server address, and the name of the board within
-the lab.
+Tests can use the REST API to control other hardware in the lab during
+the test.  However, before doing this, the test needs to know the lab
+server address, and the name of the board within the lab.
 
-These are passed as environment variables to the test.  Fuego uses
-the environment variable LAB_SERVER to indicate the leading part
-of the URL for the server, and BOARD_NAME to specify the name
-of the board.
+These are passed as environment variables to the test when it is run on
+the device under test.  Fuego uses the environment variable LAB_SERVER
+to indicate the leading part of the URL for the server, and BOARD_NAME
+to specify the name of the board.
 
 Here are example values used during initial integration with
 the board farm API.
@@ -180,24 +182,24 @@ commands, which are executed inside the docker container:
 ```
 
 This would install the Fuego board 'rp4' as node in the Jenkins
-interface, and add two jobs that Jenkins can use to perform those
-tests on the board.
+interface, and add two jobs that Jenkins can use to perform tests on the
+board.
 
-Now, the tests can be executed manually using the Jenkins interface,
-or they can be scheduled usig Jenkins features (e.g. triggering
-jobs based on schedules or Jenkins-detected events).
+With the jobs defined as shown, the tests can be executed manually using
+the Jenkins interface, or they can be scheduled usig Jenkins features
+(e.g.  triggering jobs based on schedules or Jenkins-detected events).
 
 
 ## Future work
 
 ### LabControl
 
-Tim Bird is working on development of a standalone board farm server
-called "LabControl".  This project implements the board farm REST API
-in a CGI/WSGI script, suitable for integration into a web server on
-your lab site.  It also includes a command line interface tool called
-'lc'.  This code is not yet ready for production use, but you
-can review the project if you like.
+Tim Bird is developing a standalone board farm server called
+"LabControl".  This project implements the board farm REST API in a
+CGI/WSGI script, suitable for integration into a web server on your lab
+site.  It also includes a command line interface tool called 'lc'.  This
+code is not yet ready for production use, but you can review the project
+if you like.
 
 The git repository is at https://github.com/tbird20d/labcontrol
 
@@ -209,11 +211,11 @@ This project may be integrated with Fuego in the future.
 In the future, it may be desirable to integrate board farm REST API
 operations directly into Fuego's overlay system (described below).
 Currently, there are multiple layers involved, which requires lots of
-extra configuration, is slightly inefficient.  The Fuego core calls the
-overlay functions, when then call ttc, which calls ebf, which invokes
+extra configuration, and is slightly inefficient.  The Fuego core calls the
+overlay functions, when then call 'ttc', which calls 'ebf', which invokes
 curl and jq.
 
-Instead of using ttc and ebf, the direct calls to the board farm server
+Instead of using 'ttc' and 'ebf', the direct calls to the board farm server
 could be integrated into Fuego's overlay functions.
 
 Fuego's support for board control and management operations uses
