@@ -58,7 +58,7 @@ wiki: https://elinux.org/Board_Farm_REST_API
 We have produced a working demonstration of the concept.  What we
 really need now are people who can:
  * give us feedback on the concept
- * give feedback design of the APIs
+ * give feedback on the design of the APIs
  * test the API
  * test the reference command line tool ('ebf')
 
