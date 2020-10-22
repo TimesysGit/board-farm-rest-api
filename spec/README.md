@@ -191,7 +191,7 @@ below, with redundant information removed:
 
 Some APIS support operations which might be specific to a particular
 lab's server implementation or lab configuration.  TimeSys board farms
-support elements called "Zombies", which handle power forwarding
+support elements called "Zombies", which handle port forwarding
 and other interactions with the boards in their lab.
 
 Work is ongoing to identify non-neutral APIs and decide how to either
