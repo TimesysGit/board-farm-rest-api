@@ -15,7 +15,7 @@ https://www.django-rest-framework.org/
 Individual APIs in this standard are described using files in openapi
 format in this directory.
 
-In general, an API is called by make a request of a server and receiving
+In general, an API is called by making a request of a server and receiving
 a response.  Usually, the materials for the request are passed in JSON format,
 and the response is transmitted back to the requesting client also in
 JSON format.
@@ -131,9 +131,9 @@ OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/"  --
 DEVICE_LIST=( $(echo $OUTPUT|jq -r '.[].hostname') )
 ```
 
-An authorization token is passed in the request header, and the response
-data is stored in the OUTPUT shell variable.
-Then individual elements from the OUTPUT are parsed using 'jq'.  In this
+An authorization token is passed in the request header, and the data
+from the response is stored in the OUTPUT shell variable.  Then
+individual elements from the OUTPUT are parsed using 'jq'.  In this
 case, the output is parsed into a list.  Other times, jq is used to
 parse individual fields of returned data, like the following:
 
@@ -169,18 +169,9 @@ below, with redundant information removed:
  * GET  api/v0.2/devices/$DEVICE/hotplug/$OPTION3/
  * PUT  api/v0.2/devices/$DEVICE/hotplug/$OPTION3/$OPTION4/
 
-#### Zombie control and port forwarding:
- * GET  api/v0.2/devices/$DEVICE/portfw/$OPTION4/
-
- * POST api/v0.2/zombies/$ZOMBIE_NAME/portforward/nat/"  '' --data-raw '{ "device_ip":"'"$DEVICE_IP"'", "dut_port":"'"$DUT_PORT"'", "zombie_port":"'"$ZOMBIE_PORT"'", "pcol":"'"$PROTOCOL"'" }')
- * POST api/v0.2/devices/$DEVICE/portfw/ssh/"  '' --data-raw '{ "dut_ip":"'"$DEVICE_IP"'", "username":"'"$USERNAME"'", "dut_pw":"'"$PASSWORD"'", "dut_port":"'"$DUT_PORT"'", "zombie_port":"'"$ZOMBIE_PORT"'" }')
- * GET api/v0.2/devices/$DEVICE/portfw/$OPTION4/"  '')
- * DELERL/api/v0.2/devices/$DEVICE/portfw/$OPTION4/"  '' --data-raw '{ "device_ip":"'"$DEVICE_IP"'", "dut_port":"'"$DUT_PORT"'", "zombie_port":"'"$ZOMBIE_PORT"'", "pcol":"'"$PROTOCOL"'" }')
- * DELERL/api/v0.2/zombies/$ZOMBIE_NAME/portforward/ssh/?ports=$ZOMBIE_PORT/"  '')
-
 #### Execute and file transfers:
- * GET api/v0.2/devices/$DEVICE/run/serial/"  '' --data-raw '{ "command":"'"$DEVICE_COMMAND"'" }
- * GET api/v0.2/devices/$DEVICE/run/ssh/"  '' --data-raw '{ "command": "'"$DEVICE_COMMAND"'" }
+ * GET api/v0.2/devices/$DEVICE/run/serial/"  '' --data-raw '{ "command":"'"$DEVICE_COMMAND"'" }'
+ * GET api/v0.2/devices/$DEVICE/run/ssh/"  '' --data-raw '{ "command": "'"$DEVICE_COMMAND"'"}' 
 
  * GET api/v0.2/devices/$DEVICE/download/serial/$FILE_PATH/ --output ${FILE_PATH##*/}
  * POST api/v0.2/devices/$DEVICE/upload/serial/ --form 'file=@'$FILE_PATH'
@@ -195,6 +186,25 @@ below, with redundant information removed:
  * GET  api/v0.2/devices/$DEVICE/console/serial/isactive/
  * GET  api/v0.2/devices/$DEVICE/console/serial/restart/
  * GET  api/v0.2/devices/$DEVICE/console/serial/isactive/
+
+## TimeSys-specific APIs
+
+Some APIS support operations which might be specific to a particular
+lab's server implementation or lab configuration.  TimeSys board farms
+support elements called "Zombies", which handle power forwarding
+and other interactions with the boards in their lab.
+
+Work is ongoing to identify non-neutral APIs and decide how to either
+generalize or isolate them.
+
+#### Zombie control and port forwarding:
+ * GET  api/v0.2/devices/$DEVICE/portfw/$OPTION4/
+
+ * POST api/v0.2/zombies/$ZOMBIE_NAME/portforward/nat/"  '' --data-raw '{ "device_ip":"'"$DEVICE_IP"'", "dut_port":"'"$DUT_PORT"'", "zombie_port":"'"$ZOMBIE_PORT"'", "pcol":"'"$PROTOCOL"'" }'
+ * POST api/v0.2/devices/$DEVICE/portfw/ssh/"  '' --data-raw '{ "dut_ip":"'"$DEVICE_IP"'", "username":"'"$USERNAME"'", "dut_pw":"'"$PASSWORD"'", "dut_port":"'"$DUT_PORT"'", "zombie_port":"'"$ZOMBIE_PORT"'" }'
+ * GET api/v0.2/devices/$DEVICE/portfw/$OPTION4/"  ''
+ * DELETE /api/v0.2/devices/$DEVICE/portfw/$OPTION4/"  '' --data-raw '{ "device_ip":"'"$DEVICE_IP"'", "dut_port":"'"$DUT_PORT"'", "zombie_port":"'"$ZOMBIE_PORT"'", "pcol":"'"$PROTOCOL"'" }'
+ * DELETE /api/v0.2/zombies/$ZOMBIE_NAME/portforward/ssh/?ports=$ZOMBIE_PORT/"
 
 #### Miscellaneous
  * GET  api/v0.2/devices/$DEVICE/labcontrollers/
