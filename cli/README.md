@@ -89,7 +89,7 @@ Here is a sequence of commands that show some characteristic operations:
   TFTP DIR:                 upload/DUT2
   NFS DIR:                  /var/lib/lava/dispatcher/tmp/nfs/DUT2/tmp
 
- # ebf raspi4_gpio release
+ $ ebf raspi4_gpio release
  Device is Released
 
  $ ebf mydevices
