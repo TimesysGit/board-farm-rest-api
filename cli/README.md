@@ -8,7 +8,7 @@
 'ebf' is a tool that uses the board farm REST API to discover and
 manipulate objects in an automated test lab.  It uses 'curl' to send
 requests to the server and receive responses back, and 'jq' to parse
-received response data, which is in json format.
+the response data received, which is in json format.
 
 'ebf' is written as a single, standalone shell script.  The current
 implementation of 'ebf' can successfully communicate with a TimeSys
@@ -22,10 +22,10 @@ and possibly in the future to provide a mechanism which supports
 plugging in new vendor-specific extensions.  However, this is currently
 under discussion.
 
-'ebf' is intended to server as a reference implementation of the client
+'ebf' is intended to serve as a reference implementation of the client
 side of th board farm REST API.  If you would like to implement a board
-farm REST API client in another language, to provide as another reference
-implementation, please let us know.
+farm REST API client in another language (e.g. in Python), to provide as
+another reference implementation, please let us know.
 
 ## Installing EBF cli tool
 
@@ -102,7 +102,6 @@ Here is a sequence of commands that show some characteristic operations:
 
  $ ebf raspi4_gpio power reboot
  Device raspi4_gpio is Powered reboot
-'''
-
-Use 'ebf help' to get a list of commands that are available with the
-tool.
+```
+Use 'ebf help' to get a list of commands and operations supported by
+'ebf'.
