@@ -13,7 +13,7 @@ LAVA integration for GPIO is desined as two set of REST APIs
 
 
 # North-bound REST APIs
-LAVA REST APIs based on django-rest-framework(https://www.django-rest-framework.org/).
+LAVA REST APIs based on [django-rest-framework](https://www.django-rest-framework.org/).
 
 Below new GPIO API definitions were introduced under lava/lava_rest_app/v02/views.py where all Lava v02 definitions lies.
 
