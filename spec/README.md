@@ -215,8 +215,10 @@ below, with redundant information removed:
  * PUT  api/v0.2/devices/$DEVICE/power/cancel-pending
 
 #### Hotplug:
- * GET  api/v0.2/devices/$DEVICE/hotplug/$OPTION3/
- * PUT  api/v0.2/devices/$DEVICE/hotplug/$OPTION3/$OPTION4/
+ * GET  api/v0.2/devices/$DEVICE/hotplug/${HOTPLUG_NUMBER}/
+ * PUT  api/v0.2/devices/$DEVICE/hotplug/${HOTPLUG_NUMBER}/on/
+ * PUT  api/v0.2/devices/$DEVICE/hotplug/${HOTPLUG_NUMBER}/off/
+ * PUT  api/v0.2/devices/$DEVICE/hotplug/${HOTPLUG_NUMBER}/switch/
 
 #### Execute and file transfers:
  * GET api/v0.2/devices/$DEVICE/run/serial/"  '' --data-raw '{ "command":"'"$DEVICE_COMMAND"'" }'
@@ -246,14 +248,13 @@ and other interactions with the boards in their lab.
 Work is ongoing to identify non-neutral APIs and decide how to either
 generalize or isolate them.
 
-FIXTHIS - wish I knew what OPTION4 was here
-
 #### Zombie control and port forwarding:
- * GET  api/v0.2/devices/$DEVICE/portfw/$OPTION4/
+ * GET  api/v0.2/devices/$DEVICE/portfw/nat/
+ * GET  api/v0.2/devices/$DEVICE/portfw/ssh/
 
  * POST api/v0.2/zombies/$ZOMBIE_NAME/portforward/nat/"  '' --data-raw '{ "device_ip":"'"$DEVICE_IP"'", "dut_port":"'"$DUT_PORT"'", "zombie_port":"'"$ZOMBIE_PORT"'", "pcol":"'"$PROTOCOL"'" }'
  * POST api/v0.2/devices/$DEVICE/portfw/ssh/"  '' --data-raw '{ "dut_ip":"'"$DEVICE_IP"'", "username":"'"$USERNAME"'", "dut_pw":"'"$PASSWORD"'", "dut_port":"'"$DUT_PORT"'", "zombie_port":"'"$ZOMBIE_PORT"'" }'
- * DELETE /api/v0.2/devices/$DEVICE/portfw/$OPTION4/"  '' --data-raw '{ "device_ip":"'"$DEVICE_IP"'", "dut_port":"'"$DUT_PORT"'", "zombie_port":"'"$ZOMBIE_PORT"'", "pcol":"'"$PROTOCOL"'" }'
+ * DELETE /api/v0.2/devices/$DEVICE/portfw/nat/"  '' --data-raw '{ "device_ip":"'"$DEVICE_IP"'", "dut_port":"'"$DUT_PORT"'", "zombie_port":"'"$ZOMBIE_PORT"'", "pcol":"'"$PROTOCOL"'" }'
  * DELETE /api/v0.2/zombies/$ZOMBIE_NAME/portforward/ssh/?ports=$ZOMBIE_PORT/"
 
 #### Miscellaneous
