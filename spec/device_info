@@ -1,0 +1,61 @@
+openapi: 3.0.0
+info:
+  title: Generated for BFC-TAS
+  version: '0.2'
+servers:
+  - url: https://bfc.timesys.com
+components:
+  securitySchemes:
+    tokenAuth:
+      type: http	
+      scheme: token
+security:
+  - tokenAuth: []
+paths:
+  /api/v0.2/devices/raspi4_gpio/:
+    get:
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hostname:
+                    type: string
+                  DevicePort:
+                    type: integer
+                  IOCXConnected:
+                    type: integer
+                  Zombie:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      ip:
+                        type: string
+                      url:
+                        type: string
+                  Power:
+                    type: object
+                    properties:
+                      PowerSwitch:
+                        type: string
+                      PowerSwtichPort:
+                        type: integer
+                      SupportedCommands:
+                        type: array
+                        items:
+                          type: array
+                          items:
+                            type: string
+                  NetworkBoot:
+                    type: object
+                    properties:
+                      TFTP Boot Directory:
+                        type: string
+                      NFS Root Directory:
+                        type: string
+                  AssignedTo:
+                    type: string
