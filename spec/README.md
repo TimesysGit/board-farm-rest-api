@@ -222,7 +222,7 @@ below, with redundant information removed:
 
 #### Execute and file transfers:
  * GET api/v0.2/devices/$DEVICE/run/serial/"  '' --data-raw '{ "command":"'"$DEVICE_COMMAND"'" }'
- * GET api/v0.2/devices/$DEVICE/run/ssh/"  '' --data-raw '{ "command": "'"$DEVICE_COMMAND"'"}' 
+ * GET api/v0.2/devices/$DEVICE/run/ssh/"  '' --data-raw '{ "command": "'"$DEVICE_COMMAND"'"}'
 
  * GET api/v0.2/devices/$DEVICE/download/serial/$FILE_PATH/ --output ${FILE_PATH##*/}
  * POST api/v0.2/devices/$DEVICE/upload/serial/ --form 'file=@'$FILE_PATH'
