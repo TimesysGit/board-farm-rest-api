@@ -98,9 +98,55 @@ openapi: 3.0.0
 info:
   title: Generated for BFC-TAS
   version: '0.2'
+servers:
+  - url: https://bfc.timesys.com
 paths:
-  https://bfc.timesys.com/api/rpi4_gpio/gpio/write_mask/255/255:
+  /api/raspi4_gpio/gpio/read/{pin_number}:
     get:
+      parameters:
+        - in: path
+          name: pin_number
+          required: true
+          schema:
+            type: integer
+          description: GPIO pin number
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                  data:
+                    type: integer
+```
+
+```
+openapi: 3.0.0
+info:
+  title: Generated for BFC-TAS
+  version: '0.2'
+servers:
+  - url: https://bfc.timesys.com
+paths:
+  /api/raspi4_gpio/gpio/write_mask/{gpio_pin_pattern}/{gpio_pattern_mask}:
+    get:
+      parameters:
+        - in: path
+          name: gpio_pin_pattern
+          required: true
+          schema:
+            type: integer
+          description: GPIO pin pattern
+        - in: path
+          name: gpio_pattern_mask
+          required: true
+          schema:
+            type: integer
+          description: GPIO mask
       responses:
         200:
           description: ''
