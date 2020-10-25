@@ -26,3 +26,6 @@ paths:
                     type: string
                   status:
                     type: string
+                required:
+                  - result
+                  - status
