@@ -1,5 +1,6 @@
 #!/bin/bash
 ###################################################################################################################
+# Copyright (C) 2020 Timesys Corporation                                                                          #
 # Author:    Ankit Gupta                                                                                          #
 # Email:     ankit.gupta@timesys.com                                                                              #
 # Usage:                                                                                                          #
@@ -300,7 +301,7 @@ function user_authentication() {
         echo "username:$USER_NAME" >> ~/.ebfconfig
         echo "password:$PASSWORD" >> ~/.ebfconfig
         echo "server:$SERVER_URL" >> ~/.ebfconfig
-        echo "Successfullt logged in for user $USER_NAME"
+        echo "Successfully logged in for user $USER_NAME"
       else
         echo "[ERROR] Invalid server URL or credentials"
         exit 1
