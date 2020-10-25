@@ -26,3 +26,5 @@ paths:
                   properties:
                     hostname:
                       type: string
+                  required:
+                    - hostname
