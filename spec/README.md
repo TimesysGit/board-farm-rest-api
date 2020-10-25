@@ -125,6 +125,10 @@ paths:
                     type: string
                   data:
                     type: integer
+                  message:
+                    type: string
+                required:
+                  - result
 ```
 
 ```
@@ -162,6 +166,10 @@ paths:
                     type: string
                   data:
                     type: integer
+                  message:
+                    type: string
+                required:
+                  - result
 ```
 
 **TO Be Defined**
