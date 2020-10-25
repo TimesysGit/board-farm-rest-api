@@ -50,6 +50,8 @@ paths:
                           type: array
                           items:
                             type: string
+                        required:
+                          - SupportedCommands
                   NetworkBoot:
                     type: object
                     properties:
@@ -59,3 +61,7 @@ paths:
                         type: string
                   AssignedTo:
                     type: string
+                required:
+                    - hostname
+                    - Power
+                    - AssignedTo
