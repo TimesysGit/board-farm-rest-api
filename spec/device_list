@@ -20,11 +20,13 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    hostname:
+                type: object
+                properties:
+                  result:
+                    type: string
+                  data:
+                    type: array
+                    items:
                       type: string
-                  required:
-                    - hostname
+                required:
+                  - result
