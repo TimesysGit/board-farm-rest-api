@@ -22,46 +22,52 @@ paths:
               schema:
                 type: object
                 properties:
-                  hostname:
+                  result:
                     type: string
-                  DevicePort:
-                    type: integer
-                  IOCXConnected:
-                    type: integer
-                  Zombie:
+                  data:
                     type: object
                     properties:
-                      name:
+                      Hostname:
                         type: string
-                      ip:
+                      AssignedTo:
                         type: string
-                      url:
-                        type: string
-                  Power:
-                    type: object
-                    properties:
-                      PowerSwitch:
-                        type: string
-                      PowerSwtichPort:
-                        type: integer
-                      SupportedCommands:
+                      PowerCommands:
                         type: array
                         items:
-                          type: array
-                          items:
-                            type: string
-                        required:
-                          - SupportedCommands
-                  NetworkBoot:
-                    type: object
-                    properties:
-                      TFTP Boot Directory:
-                        type: string
-                      NFS Root Directory:
-                        type: string
-                  AssignedTo:
-                    type: string
+                          type: string
+                      lab:
+                        type: object
+                        properties:
+                          Zombie:
+                            type: object
+                            properties:
+                              Hostname:
+                                type: string
+                              IPAddress:
+                                type: string
+                              URL:
+                                type: string
+                              DevicePort:
+                                type: integer
+                          IOCXConnected:
+                            type: integer
+                          Power:
+                            type: object
+                            properties:
+                              PowerSwitch:
+                                type: string
+                              PowerSwitchPort:
+                                type: integer
+                          NetworkBoot:
+                            type: object
+                            properties:
+                              TFTP Boot Directory:
+                                type: string
+                              NFS Root Directory:
+                                type: string
+                    required:
+                      - Hostname
+                      - AssignedTo
+                      - PowerCommands
                 required:
-                    - hostname
-                    - Power
-                    - AssignedTo
+                  - result                                
