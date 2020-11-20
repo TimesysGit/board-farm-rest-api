@@ -38,7 +38,7 @@ git clone https://github.com/TimesysGit/board-farm-rest-api.git
 ```
 3. copy ebf tool to /usr/local/bin
 ```
-sudo cp board-farm-rest-api/cli/ebf.sh /usr/local/bin/ebf
+sudo cp board-farm-rest-api/cli/ebf /usr/local/bin/ebf
 ```
 4. Provide executable permission
 ```
