@@ -44,7 +44,15 @@ sudo cp board-farm-rest-api/cli/ebf /usr/local/bin/ebf
 ```
 sudo chmod a+x /usr/local/bin/ebf
 ```
-5. Run below help command to see supported options and commands
+5. After successfully installing ebf tool first, you have to configure it by providing the details of EBF-Server and user-credentials. You have to configure it only first time unless there is no change in the user-credentials. Run below command to configure ebf tool.
+```
+ebf login
+```
+You can check the saved configuration for EBF using below command.
+```
+ebf list config
+```
+6. Now you are ready to use ebf tool! Run below help command to see supported options and commands
 ```
 ebf help
 ```
