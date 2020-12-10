@@ -5,24 +5,24 @@
 
 ## Overview
 
-'ebf' is a tool that uses the board farm REST API to discover and
+'ebf' cli is a tool that uses the board farm REST API to discover and
 manipulate objects in an automated test lab.  It uses 'curl' to send
 requests to the server and receive responses back, and 'jq' to parse
 the response data received, which is in json format.
 
-'ebf' is written as a single, standalone shell script.  The current
-implementation of 'ebf' can successfully communicate with a TimeSys
+'ebf' cli is written as a single, standalone shell script.  The current
+implementation of 'ebf' cli can successfully communicate with a TimeSys
 board farm cloud server which implements the board farm REST API.  The
 goal is to have it support interaction with other board farm management
-servers, such as "LabControl".  The current version of 'ebf' supports
+servers, such as "LabControl".  The current version of 'ebf' cli supports
 both generic and vendor-specific features, with this first
 implementation supporting some TimeSys-specific fields and operations.
-The goal over time is to mark non-vendor-neutral functionality in 'ebf',
+The goal over time is to mark non-vendor-neutral functionality in 'ebf' cli,
 and possibly in the future to provide a mechanism which supports
 plugging in new vendor-specific extensions.  However, this is currently
 under discussion.
 
-'ebf' is intended to serve as a reference implementation of the client
+'ebf' cli is intended to serve as a reference implementation of the client
 side of th board farm REST API.  If you would like to implement a board
 farm REST API client in another language (e.g. in Python), to provide as
 another reference implementation, please let us know.
@@ -36,7 +36,7 @@ another reference implementation, please let us know.
 ```
 git clone https://github.com/TimesysGit/board-farm-rest-api.git
 ```
-3. copy ebf tool to /usr/local/bin
+3. copy ebf cli tool to /usr/local/bin
 ```
 sudo cp board-farm-rest-api/cli/ebf /usr/local/bin/ebf
 ```
@@ -44,7 +44,7 @@ sudo cp board-farm-rest-api/cli/ebf /usr/local/bin/ebf
 ```
 sudo chmod a+x /usr/local/bin/ebf
 ```
-5. After successfully installing ebf tool first, you have to configure it by providing the details of EBF-Server and user-credentials. You have to configure it only first time unless there is no change in the user-credentials. Run below command to configure ebf tool.
+5. After successfully installing ebf cli tool first, you have to configure it by providing the details of EBF-Server and user-credentials. You have to configure it only first time unless there is no change in the user-credentials. Run below command to configure ebf tool.
 ```
 ebf login
 ```
@@ -52,14 +52,14 @@ You can check the saved configuration for EBF using below command.
 ```
 ebf list config
 ```
-6. Now you are ready to use ebf tool! Run below help command to see supported options and commands
+6. Now you are ready to use ebf cli tool! Run below help command to see supported options and commands
 ```
 ebf help
 ```
 
 ## Using EBF cli tool
 
-Most operations that you perform with the 'ebf' tool are operations on
+Most operations that you perform with the 'ebf' cli tool are operations on
 "boards" in a board farm.  A few commands are for authenticating with
 the lab and showing configuration, and some other operations are for
 discovering the set of boards in the lab, other lab setup.
