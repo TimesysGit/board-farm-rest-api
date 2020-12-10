@@ -60,7 +60,7 @@ really need now are people who can:
  * give us feedback on the concept
  * give feedback on the design of the APIs
  * test the API
- * test the reference command line tool ('ebf')
+ * test the 'ebf' command line tool
 
 If you develop tests or a test framework, or run a board farm, and are
 interested in this project, please contact us.
