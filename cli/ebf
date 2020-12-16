@@ -1387,6 +1387,9 @@ function ssh_upload() {
 	DST_FILE_PATH=${OPTION5}
 	FILE_PERMISSIONS=${OPTION6}
   if [ -f $SRC_FILE_PATH ];then
+	  if [ -z "$FILE_PERMISSIONS" ] ; then
+		  FILE_PERMISSIONS=$(stat -c '%a' $SRC_FILE_PATH)
+	  fi
 		if [ "$FILE_PERMISSIONS" != "" ];then
 			OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/upload/ssh/" --header 'Authorization: token '$AUTH_TOKEN'' --form 'file=@'$SRC_FILE_PATH'' --form 'path='$DST_FILE_PATH'' --form 'permission='$FILE_PERMISSIONS'' )
 		else
