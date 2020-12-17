@@ -1273,6 +1273,7 @@ function serial_upload() {
 		fi
 	elif [ -d $SRC_FILE_PATH ];then
 		TMP_DIR=$(mktemp -d)
+		SRC_FILE_PATH="$(realpath ${SRC_FILE_PATH})"
 		SRC_FILE_PATH=${SRC_FILE_PATH%/}
 		DIR_PATH=${SRC_FILE_PATH%/*}
 	  DIR_NAME=${SRC_FILE_PATH##*/}
@@ -1397,6 +1398,7 @@ function ssh_upload() {
 		fi
 	elif [ -d $SRC_FILE_PATH ];then
 		TMP_DIR=$(mktemp -d)
+		SRC_FILE_PATH="$(realpath ${SRC_FILE_PATH})"
 		SRC_FILE_PATH=${SRC_FILE_PATH%/}
 		DIR_PATH=${SRC_FILE_PATH%/*}
 	  DIR_NAME=${SRC_FILE_PATH##*/}
