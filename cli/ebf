@@ -8,7 +8,7 @@ DEVICE_LIST=()
 MY_DEVICE_LIST=()
 USER_NAME=""
 GPIO_PIN_DATA=""
-
+VERSION="1.0.1"
 
 function check_dependencies() {
 	packageList="jq curl sshpass"
@@ -32,6 +32,8 @@ function help() {
   echo "   login            For login into EBF Server, required only first time"
   echo "   list             To list all active devices and stored configuration"
   echo "   mydevices        Provide the list of devices assigned to current User"
+	echo "   fmanager         Upload, Download images and other operations for EBF-FileMnager"
+	echo "   version          To see the EBF-CLI Version"
   echo "   <device name>    To see the information and perform operation on a device"
   echo "   help             Provide help guide"
   echo ""
@@ -39,7 +41,7 @@ function help() {
 	echo ""
 	echo "Run 'ebf <device-name> help' for Information regarding device specific features"
   echo " "
-  exit
+  exit 1
 }
 
 function help_login() {
@@ -52,7 +54,7 @@ function help_login() {
 	echo "                    then use the \"ebf login\" command and follow the instructions"
   echo " "
 	echo "Run 'ebf <device-name> help' for Information regarding device specific features"
-  exit
+  exit 1
 }
 
 function help_list() {
@@ -64,7 +66,7 @@ function help_list() {
   echo "   devices          Provide the list of all the active devices in EBF-server"
   echo ""
 	echo "Run 'ebf <device-name> help' for Information regarding device specific features"
-  exit
+  exit 1
 }
 
 function help_mydevices() {
@@ -75,6 +77,17 @@ function help_mydevices() {
 	echo "   mydevices        Provide the list of devices assigned to current User"
 	echo " "
 	echo "Run 'ebf <device-name> help' for Information regarding device specific features"
+	exit 1
+}
+
+function help_version() {
+	echo " "
+	echo "Usage: ebf version"
+	echo " "
+	echo "Description:"
+	echo "   To see the Current version of EBF-CLI installed"
+	echo " "
+	exit 1
 }
 
 function help_device() {
@@ -96,7 +109,7 @@ function help_device() {
   echo "   list             List all the lab controllers assigned to a device"
 	echo "   netboot          Upload, Download images and other operations for network boot Image management"
 	echo "   sdcard           Partition, Format and other operations related to SDCard management."
-	echo "   bfc              To see the content for Device Netboot Directory"
+	echo "   usb              Partition, Format and other operations related to USB management."
   echo ""
   echo "Run 'ebf  <device name> [OPTION] help' for more information of a option."
   echo " "
@@ -184,7 +197,7 @@ function help_device_hotplug() {
   echo ""
   echo "Options:"
   echo "   status                  Provides the current Hotplug status whether it is"
-  echo "                           connected to devise side or not"
+  echo "                           connected to device side or not"
   echo "   on                      Connect hotplug to Device side"
   echo "   off                     Disconnect hotplug from Device"
   echo "   switch                  Toggle the current state of a particular hotplug"
@@ -194,67 +207,49 @@ function help_device_hotplug() {
 
 function help_device_portfw() {
   echo " "
-  echo "Usage: ebf <device name> portfw [list/add/remove] [NAT/SSH]"
+  echo "Usage: ebf <device name> portfw [list/add/remove] [ARGS]"
   echo ""
 	echo "Examples:"
-	echo "    1. ebf bbb01 portfw list ssh (List all the SSH forwarded port)"
-	echo "    2. ebf bbb01 portfw add ssh 192.168.111.10 root root 22 8022 (For SSH port forward)"
-	echo "    3. ebf bbb01 portfw remove ssh 8022 (For removing SSH forwarding for a Zombie port)"
+	echo "    1. ebf bbb01 portfw list (List all the SSH forwarded port)"
+	echo "    2. ebf bbb01 portfw add 192.168.111.10 22 8022 tcp (To add a Port Forward Rule)"
+	echo "    3. ebf bbb01 portfw remove 192.168.111.10 22 8022 tcp (To Remove a Port Forward Rule)"
   echo ""
 	echo ""
   echo "Options:"
-  echo "   list [NAT/SSH]               Provides list of all the IP rules forwarded on a Zombie"
-  echo "   add  [NAT/SSH] [ARGS]        Add a new NAT/SSH rule"
-  echo "   remove  [NAT/SSH] [ARGS]     Remove a NAT/SSH rule"
+  echo "   list                  Provides list of all the IP rules forwarded on a Zombie"
+  echo "   add  [ARGS]           To Add a new port forward rule"
+  echo "   remove [ARGS]         To Add a new port forward rule"
   echo ""
 	echo ""
-	echo "Run 'ebf  <device name> portfw [OPTION] help' for more information of a option."
+	echo "Run 'ebf  <device name> portfw [OPTION] help' for more information about a option."
 	echo ""
   exit
 }
 
 function help_device_portfw_list() {
   echo " "
-  echo "Usage: ebf <device name> portfw list [NAT/SSH]"
+  echo "Usage: ebf <device name> portfw list"
   echo ""
 	echo "Examples:"
-	echo "    1. ebf bbb01 portfw list ssh (List all the SSH forwarded rules)"
-	echo "    2. ebf bbb01 portfw list nat (List all the NAT forwarded riles)"
+	echo "       ebf bbb01 portfw list"
   echo ""
-  echo "Options:"
-  echo "   ssh      List all the SSH forwarded rules"
-  echo "   nat      List all the NAT forwarded riles"
-  echo ""
-  exit
+  exit 1
 }
 
 function help_device_portfw_add() {
 	echo " "
-	echo "For SSH Forward"
-	echo " Usage  : ebf <device name> portfw add ssh <device-ip> <username> <password> <dut-port> <zombie-port>"
-	echo " Example: ebf bbb01 portfw add ssh 192.168.111.10 root root 22 8022"
-	echo ""
-	echo ""
-	echo "For NAT Forward"
-	echo " Usage  : ebf <device name> portfw add nat <device-ip> <dut-port> <zombie-port> <protocol>"
-	echo " Example: ebf bbb01 portfw add nat 192.168.111.10 22 8022 tcp"
+	echo " Usage  : ebf <device name> portfw add <device-ip> <dut-port> <zombie-port> <protocol>"
+	echo " Example:"
+	echo "          ebf bbb01 portfw add 192.168.111.10 22 8022 tcp"
   echo ""
-	echo ""
-  exit
+  exit 1
 }
 
 function help_device_portfw_remove() {
-	echo " "
-	echo "For Removing SSH Forward Rule"
-	echo " Usage  : ebf <device name> portfw remove ssh <zombie-port>"
-	echo " Example: ebf bbb01 portfw remove ssh 8022"
-	echo ""
-	echo ""
-	echo "For Removing NAT Forward Rule"
-	echo " Usage  : ebf <device name> portfw remove nat <device-ip> <dut-port> <zombie-port> <protocol>"
-	echo " Example: ebf bbb01 portfw remove nat 192.168.111.10 22 8022 tcp"
+	echo " Usage  : ebf <device name> portfw remove <device-ip> <dut-port> <zombie-port> <protocol>"
+	echo " Example: "
+	echo "          ebf bbb01 portfw remove 192.168.111.10 22 8022 tcp"
   echo ""
-	echo ""
 	exit 1
 }
 
@@ -308,6 +303,7 @@ function help_device_ssh() {
   echo "   run              Run a command on a device and Display it's OUTPUT using ssh"
   echo "   download         Download a file to a local system from device using ssh"
   echo "   upload           Upload a local file to a device using ssh"
+	echo "   import-key       To import Zombie ssh-key into Zombie for password-less opreations "
   echo ""
 	echo "Run 'ebf  <device name> ssh [OPTION] help' for more information of a option."
   exit
@@ -326,18 +322,31 @@ function help_device_ssh_upload() {
   echo " "
   echo "Usage: ebf <device name> ssh upload <src-file-path> <dst-file-path> <permissions[optional]>"
   echo " "
-  echo "e.g. ebf bbb01 ssh upload /home/admin/hello.txt /home/user/hello1.txt"
-	echo " or"
-  echo "e.g. ebf bbb01 ssh upload /home/admin/hello.txt /home/user/hello1.txt 777"
-  exit
+  echo "Example:"
+	echo "    1. ebf bbb01 ssh upload /home/admin/hello.txt /home/user/hello1.txt"
+  echo "    2. ebf bbb01 ssh upload /home/admin/hello.txt /home/user/hello1.txt 777"
+	echo ""
+  exit 1
 }
 
 function help_device_ssh_download() {
   echo " "
   echo "Usage: ebf <device name> ssh download <src-file-path> <dst-file-path> "
   echo " "
-  echo "e.g. ebf bbb01 ssh download /home/admin/hello.txt ./hello1.txt"
-	exit
+  echo "Example: "
+	echo "       ebf bbb01 ssh download /home/admin/hello.txt ./hello1.txt"
+	echo ""
+	exit 1
+}
+
+function help_device_ssh_import_key() {
+	echo " "
+  echo "Usage: ebf <device name> ssh import-key <device-ip> <username> <password>"
+  echo " "
+  echo "Example:"
+	echo "       ebf bbb02 ssh import-key 192.168.111.11 root root"
+	echo ""
+	exit 1
 }
 
 function help_device_console() {
@@ -402,12 +411,27 @@ function help_device_netboot() {
   echo "   ls              List the content of Network Boot Directory or sub-directory"
   echo "   mkdir           Create a directory inside Network Boot directory or sub-directory "
   echo "   rm              Delete a directory inside Network Boot directory or sub-directory"
-  echo "   upload          Extract a rootfs or copy files to Network Boot directory"
+  echo "   transfer        Extract a rootfs or copy files to Network Boot directory"
+	echo "   download        Download a file from Network Boot Directory to local machine"
+	echo "   upload          Upload a file from Local Machine to Network Boot Directory"
   echo "   symlink         Create a symlink of o rootfs directory with fsroot"
   echo ""
   echo "Run 'ebf  <device name> netboot [OPTION] help' for more information about a option."
   echo " "
   exit
+}
+
+function help_device_netboot_upload() {
+	echo " "
+	echo "Usage:  ebf <device-name> netboot upload [SRC_FILE_PATH] [DST_FILE_PATH]"
+	echo ""
+	echo "Example: "
+	echo "    ebf bbb01 sdcard netboot /tmp/file1.txt fsroot/"
+	echo ""
+	echo "Description"
+	echo "    Upload a file into a Network-Boot Directory or Sub-Directory"
+	echo " "
+	exit 1
 }
 
 function help_device_netboot_ls() {
@@ -455,35 +479,43 @@ function help_device_netboot_rm() {
 	echo "Example: ebf bbb01 netboot rm fsroot/tmp"
 }
 
-function help_device_netboot_upload() {
+function help_device_netboot_transfer() {
 	echo " "
-  echo "Usage:   ebf <device name> netboot upload [local|server|status|remove] [OPTIONS]"
+  echo "Usage:   ebf <device name> netboot transfer [local|server|status|remove] [OPTIONS]"
 	echo ""
   echo "Description"
   echo "   local|server     Extract or copy a File/Dir from local system or EBF-Server"
 	echo "                    into a Network-Boot Directory or sub-directory."
-	echo "   status [JOB-ID]  it will provide the status off all the upload jobs in running or queue state"
-	echo "                    You can also check the status of a single job using upload Job-ID."
+	echo "   status [JOB-ID]  it will provide the status off all the transfer jobs in running or queue state"
+	echo "                    You can also check the status of a single job using transfer Job-ID."
 	echo "   remove [Job-ID]  It will cancel the jobs and remove it from the list"
 	echo ""
 	echo "Option Includes:"
 	echo "  *   -f | --file            - path of a local file or EBF-Server"
-	echo "      -t | --tool            - provide tool from [tar, cp, unzip] to upload a file"
+	echo "      -t | --tool            - provide tool from [tar, cp, unzip] to transfer a file"
 	echo "      -d | --dir             - Name of a directory in which you want to extract rootfs default is \"fsroot\""
-	echo "      -a | --cmd-args        - any arguments you want to provide with upload tool selected"
-	echo "      -r | --remove-after    - This will delete file from EBF-Server after uploading value should be \"on/off\""
+	echo "      -a | --cmd-args        - any arguments you want to provide with transfer tool selected"
+	echo "      -r | --remove-after    - This will delete file from EBF-Server after transferring value should be \"on/off\""
 	echo ""
 	echo "  *  Indicates Mandatory Arguments "
 	echo ""
 	echo "Usage Examples:"
-	echo "   1. ebf bbb01 netboot upload local -f /tmp/hello.txt"
-	echo "   2. ebf bbb01 netboot upload local -f /tmp/hello.txt -d fsroot"
-	echo "   3. ebf bbb01 netboot upload local -f /tmp/rootfs.tar.gz -d my-rootfs -t tar -a xzf -r on"
-	echo "   4. ebf bbb01 netboot upload server -f rootfs.tar.gz -d my-rootfs -t tar -a xzf -r on"
-	echo "   5. ebf bbb01 netboot upload status"
-	echo "   6. ebf bbb01 netboot upload status 04366c6a-fde2-424d-9aea-1174cb24650d"
+	echo "   1. ebf bbb01 netboot transfer local -f /tmp/hello.txt"
+	echo "   2. ebf bbb01 netboot transfer local -f /tmp/hello.txt -d fsroot"
+	echo "   3. ebf bbb01 netboot transfer local -f /tmp/rootfs.tar.gz -d my-rootfs -t tar -a xz -r on"
+	echo "   4. ebf bbb01 netboot transfer server -f rootfs.tar.gz -d my-rootfs -t tar -a xz -r on"
+	echo "   5. ebf bbb01 netboot transfer status"
+	echo "   6. ebf bbb01 netboot transfer status 04366c6a-fde2-424d-9aea-1174cb24650d"
 	echo "   7. ebf bbb01 netboot upload remove 04366c6a-fde2-424d-9aea-1174cb24650d"
 	echo ""
+}
+
+function help_device_netboot_download() {
+  echo " "
+  echo "Usage: ebf <device name> netboot download <src-file-path> <dst-file-path> "
+  echo " "
+  echo "e.g. ebf bbb01 netboot download /home/admin/hello.txt ./hello1.txt"
+	exit
 }
 
 function help_device_netboot_symlink() {
@@ -514,7 +546,9 @@ function help_device_sdcard() {
   echo "   format          Format a SDCard partition"
   echo "   partition       Create SDCard partitions"
 	echo "   backup          Create a backup of SDCard"
-	echo "   flash           Extract/Copy/Flash a rootfs/file/image to a sdcard or it's partition"
+	echo "   flash           Upload/Extract/Copy/Flash a rootfs/file/image to a sdcard or it's partition"
+	echo "   download        Download a file from a SDCard Partition to local machine"
+	echo "   upload          Upload a file from Local Machine to a SDCard Partition"
   echo ""
   echo "Run 'ebf  <device name> sdcard [OPTION] help' for more information about a option."
 	echo "Example: ebf bbb01 sdcard flash help"
@@ -524,12 +558,12 @@ function help_device_sdcard() {
 
 function help_device_sdcard_switch() {
 	echo " "
-  echo "Usage:   ebf <device name> sdcard switch [device|zombie]"
+  echo "Usage:   ebf <device name> sdcard switch [device|zombie|side]"
 	echo ""
 	echo "Example: ebf bbb01 sdcard switch zombie"
 	echo ""
   echo "Description"
-  echo "   It will connect the sdcard to Device side or Zombie side"
+  echo "   It will connect the sdcard to Device side or Zombie side or Switch from the current side"
 	echo ""
 	exit 1
 }
@@ -546,6 +580,7 @@ function help_device_sdcard_ls() {
 	echo "   It will show thw content of that directory."
 	echo ""
 	echo "Example: ebf bbb01 sdcard ls sda2/fsroot"
+	exit 1
 }
 
 function help_device_sdcard_mkdir() {
@@ -557,6 +592,7 @@ function help_device_sdcard_mkdir() {
   echo "Description"
 	echo "   Create a directory inside a SDCard partition, directory name is mandatory."
 	echo ""
+	exit 1
 }
 
 function help_device_sdcard_rm() {
@@ -568,6 +604,7 @@ function help_device_sdcard_rm() {
   echo "Description"
   echo "   Delete a directory/file inside a sdcard partition, directory or file name is mandatory."
 	echo ""
+	exit 1
 }
 
 function help_sdcard_format() {
@@ -579,7 +616,7 @@ function help_sdcard_format() {
 	echo ""
   echo "Description"
   echo "   Format a sdcard partition. The format partition information should be provide in the form of"
-	echo "   \",\" seperated of \"PARTITION,PARTITION_TYPE\". The above example #1 will format Partiion sda1"
+	echo "   \",\" seperated of \"PARTITION,PARTITION_TYPE\". The above example will format Partiion sda1"
 	echo "   into vfat and sdb2 into ext4"
 	echo ""
 	exit 1
@@ -599,6 +636,7 @@ function help_sdcard_partition() {
 	echo "   The above example #1 will create Partition A of size 1000 MB and type of Vfat"
 	echo "   and Partition B of size 8000 MB and type ext4"
 	echo ""
+	exit 1
 }
 
 function help_device_sdcard_backup() {
@@ -617,6 +655,7 @@ function help_device_sdcard_backup() {
 	echo "   3. ebf bbb01 sdcard backup status 04366c6a-fde2-424d-9aea-1174cb24650d"
 	echo "   4. ebf bbb01 sdcard backup remove 04366c6a-fde2-424d-9aea-1174cb24650d"
 	echo ""
+	exit 1
 }
 
 function help_device_sdcard_flash() {
@@ -644,13 +683,299 @@ function help_device_sdcard_flash() {
 	echo ""
 	echo "Usage Examples:"
 	echo "   1. ebf bbb01 sdcard flash local -f /tmp/hello.txt -p sda1"
-	echo "   2. ebf bbb01 sdcard flash local -f /tmp/rootfs.tar.gz -p sda2 -t tar -a xzf -m on"
-	echo "   3. ebf bbb01 sdcard flash server -f rootfs.tar.gz -p sda2 -t tar -a xzf -m on -r on"
-	echo "   4. ebf bbb01 sdcard flash server -f rootfs.tar.gz -p sda2 -t tar -a xzf -m on -r on -b on"
+	echo "   2. ebf bbb01 sdcard flash local -f /tmp/rootfs.tar.gz -p sda2 -t tar -a xz -m on"
+	echo "   3. ebf bbb01 sdcard flash server -f rootfs.tar.gz -p sda2 -t tar -a xz -m on -r on"
+	echo "   4. ebf bbb01 sdcard flash server -f rootfs.tar.gz -p sda2 -t tar -a xz -m on -r on -b on"
 	echo "   5. ebf bbb01 sdcard flash status"
 	echo "   6. ebf bbb01 sdcard flash status 04366c6a-fde2-424d-9aea-1174cb24650d"
 	echo "   7. ebf bbb01 sdcard flash remove 04366c6a-fde2-424d-9aea-1174cb24650d"
 	echo ""
+	exit 1
+}
+
+function help_device_sdcard_upload() {
+	echo " "
+	echo "Usage:  ebf <device-name> sdcard upload [SRC_FILE_PATH] [DST_FILE_PATH]"
+	echo ""
+	echo "Example: "
+	echo "    ebf bbb01 sdcard upload /tmp/file1.txt sdb1/"
+	echo ""
+	echo "Description"
+	echo "    Upload a file into a SDCard Partition, Directory or Sub-Directory"
+	echo " "
+	exit 1
+}
+
+function help_device_sdcard_download() {
+	echo " "
+  echo "Usage: ebf <device name> sdcard download <src-file-path> <dst-file-path> "
+  echo " "
+  echo "e.g. ebf bbb01 sdcard download sdb1/test.txt  /tmp/"
+	exit 1
+}
+
+function help_device_usb() {
+	echo " "
+  echo "Usage:   ebf <device name> usb [OPTION] [ARGS]"
+	echo ""
+	echo "Example: ebf bbb01 usb info"
+  echo "Options:"
+	echo "   info            Provides the USB information it's size, partition etc."
+	echo "   side            Provides whether the USB is connected to Zombie side or Device side."
+	echo "   switch          It will switch the USB from Zombie to Device side or vice versa."
+  echo "   ls              List the partition or content inside a partition"
+  echo "   mkdir           Create a directory inside USB partition, directory or sub-directory"
+  echo "   rm              Delete a directory inside USB partition, directory or sub-directory"
+  echo "   format          Format a USB partition"
+  echo "   partition       Create USB partitions"
+	echo "   backup          Create a backup of USB Drive"
+	echo "   flash           Upload/Extract/Copy/Flash a rootfs/file/image to a USB or it's partition"
+	echo "   download        Download a file from a USB Partition to local machine"
+	echo "   upload          Upload a file from Local Machine to a USB Partition"
+  echo ""
+  echo "Run 'ebf  <device name> usb [OPTION] help' for more information about a option."
+	echo "Example: ebf bbb01 usb flash help"
+  echo " "
+  exit 1
+}
+
+function help_device_usb_switch() {
+	echo " "
+  echo "Usage:   ebf <device name> usb switch [device|zombie|side]"
+	echo ""
+	echo "Example: ebf bbb01 usb switch zombie"
+	echo ""
+  echo "Description"
+  echo "   It will connect the USB to Device side or Zombie side or Switch from the current side"
+	echo ""
+	exit 1
+}
+
+function help_device_usb_ls() {
+	echo " "
+  echo "Usage:   ebf <device name> usb ls [DIR_NAME_OPTIONAL]"
+	echo ""
+	echo "Example: ebf bbb01 usb ls"
+	echo ""
+  echo "Description"
+  echo "   List the content of USB, by default it shows the partitions"
+	echo "   of USB and you can provide that partition or directory inside that partition"
+	echo "   It will show thw content of that directory."
+	echo ""
+	echo "Example: ebf bbb01 usb ls sda2/fsroot"
+	exit 1
+}
+
+function help_device_usb_mkdir() {
+	echo " "
+  echo "Usage:   ebf <device name> usb mkdir [DIR_NAME]"
+	echo ""
+	echo "Example: ebf bbb01 usb mkdir sda2/tmp"
+	echo ""
+  echo "Description"
+	echo "   Create a directory inside a USB partition, directory name is mandatory."
+	echo ""
+	exit 1
+}
+
+function help_device_usb_rm() {
+	echo " "
+  echo "Usage:   ebf <device name> usb rm [DIR_NAME/FileName]"
+	echo ""
+	echo "Example: ebf bbb01 usb rm tmp"
+	echo ""
+  echo "Description"
+  echo "   Delete a directory/file inside a USB partition, directory or file name is mandatory."
+	echo ""
+	exit 1
+}
+
+function help_usb_format() {
+	echo " "
+  echo "Usage:   ebf <device name> usb format partition,partition-type"
+	echo ""
+	echo "Example:"
+	echo "   ebf bbb01 usb format sda1,vfat sda2,ext4"
+	echo ""
+  echo "Description"
+  echo "   Format a USB partition. The format partition information should be provide in the form of"
+	echo "   \",\" seperated of \"PARTITION,PARTITION_TYPE\". The above example will format Partiion sda1"
+	echo "   into vfat and sdb2 into ext4"
+	echo ""
+	exit 1
+}
+
+function help_usb_partition() {
+	echo " "
+  echo "Usage:   ebf <device name> usb partiion label,size,partition-type,bootable(optional)"
+	echo ""
+	echo "Example:"
+	echo "   1. ebf bbb01 usb partition A,1000,vfat B,8000,ext4"
+	echo "   2. ebf bbb01 usb partition A,1000,vfat,True B,8000,ext4"
+	echo ""
+  echo "Description"
+  echo "   Create and format USB partition. The partition information should be provide \",\" seperated"
+	echo "   in the form of LABEL,SIZE(MB),PARTITION_TYPE,BOOTABLE(True/FALSE)."
+	echo "   The above example #1 will create Partition A of size 1000 MB and type of Vfat"
+	echo "   and Partition B of size 8000 MB and type ext4"
+	echo ""
+	exit 1
+}
+
+function help_device_usb_backup() {
+	echo " "
+	echo "Usage:   ebf <device name> usb backup [status|remove] [ARGS]"
+	echo ""
+	echo "Description"
+	echo "   status [JOB-ID]  it will provide the status off all the backup jobs in running or queue state"
+	echo "                    You can also check the status of a single job using backup Job-ID."
+	echo "   remove [Job-ID]  It will cancel the backup jobs and remove it from the list"
+	echo ""
+	echo ""
+	echo "Usage Examples:"
+	echo "   1. ebf bbb01 usb backup"
+	echo "   2. ebf bbb01 usb backup status"
+	echo "   3. ebf bbb01 usb backup status 04366c6a-fde2-424d-9aea-1174cb24650d"
+	echo "   4. ebf bbb01 usb backup remove 04366c6a-fde2-424d-9aea-1174cb24650d"
+	echo ""
+	exit 1
+}
+
+function help_device_usb_flash() {
+	echo " "
+  echo "Usage:   ebf <device name> usb flash [local|server|status|remove] [OPTIONS]"
+	echo ""
+  echo "Description"
+  echo "   local|server     Extract or copy a File/Dir from local system or EBF-Server"
+	echo "                    into a USB Partition or Directory."
+	echo "   status [JOB-ID]  it will provide the status off all the flashing jobs in running or queue state"
+	echo "                    You can also check the status of a single job using upload Job-ID."
+	echo "   remove [Job-ID]  It will cancel the jobs and remove it from the list"
+	echo ""
+	echo "Option Includes:"
+	echo "  *   -f | --file            - path of a local file or EBF-Server"
+	echo "  *   -p | --partition       - partition in which you want to copy/flash image"
+	echo "      -t | --tool            - provide tool from [tar, cp, unzip, dd, zcat_dd, bmaptool] to upload/flash a file/image"
+	echo "      -b | --backup          - Backup USB befor flashing an image, valid options are [on/off]"
+	echo "      -m | --mkfs            - Format USB before flashing an image, valid options are [on/off]"
+	echo "      -a | --cmd-args        - any arguments you want to provide with upload tool selected"
+	echo "      -r | --remove-after    - This will delete file from EBF-Server after image flashing, valid options are [on/off]"
+	echo "   -bmap | --bmap-file       - Path of any bmap file"
+	echo ""
+	echo "  *  Indicates Mandatory Arguments "
+	echo ""
+	echo "Usage Examples:"
+	echo "   1. ebf bbb01 usb flash local -f /tmp/hello.txt -p sda1"
+	echo "   2. ebf bbb01 usb flash local -f /tmp/rootfs.tar.gz -p sda2 -t tar -a xz -m on"
+	echo "   3. ebf bbb01 usb flash server -f rootfs.tar.gz -p sda2 -t tar -a xz -m on -r on"
+	echo "   4. ebf bbb01 usb flash server -f rootfs.tar.gz -p sda2 -t tar -a xz -m on -r on -b on"
+	echo "   5. ebf bbb01 usb flash status"
+	echo "   6. ebf bbb01 usb flash status 04366c6a-fde2-424d-9aea-1174cb24650d"
+	echo "   7. ebf bbb01 usb flash remove 04366c6a-fde2-424d-9aea-1174cb24650d"
+	echo ""
+	exit 1
+}
+
+function help_device_usb_upload() {
+	echo " "
+	echo "Usage:  ebf <device-name> usb upload [SRC_FILE_PATH] [DST_FILE_PATH]"
+	echo ""
+	echo "Example: "
+	echo "    ebf bbb01 usb upload /tmp/file1.txt sdb1/"
+	echo ""
+	echo "Description"
+	echo "    Upload a file into a USB Partition, Directory or Sub-Directory"
+	echo " "
+	exit 1
+}
+
+function help_device_usb_download() {
+	echo " "
+  echo "Usage: ebf <device name> usb download <src-file-path> <dst-file-path> "
+  echo " "
+  echo "e.g. ebf bbb01 usb download sdb1/test.txt  /tmp/"
+	exit 1
+}
+
+function help_fmanager() {
+	echo " "
+	echo "Usage:   ebf fmanager [OPTION]"
+	echo ""
+	echo "Example: ebf fmanager ls"
+	echo ""
+	echo "Options:"
+	echo "   ls              List the content of EBF-FileManager Directory or sub-directory"
+	echo "   mkdir           Create a directory inside EBF-FileManager directory or sub-directory "
+	echo "   rm              Delete a directory inside EBF-FileManager directory or sub-directory"
+	echo "   upload          Copy files to EBF-FileManager directory"
+	echo "   download        Download a file from EBF-FileManager Directory to local machine"
+	echo ""
+	exit 1
+}
+
+function help_fmanager_ls() {
+	echo " "
+  echo "Usage:  ebf fmanager ls [DIR_NAME_OPTIONAL]"
+	echo ""
+	echo "Example: "
+	echo "  1. ebf fmanager ls"
+	echo "  2. ebf fmanager ls admin"
+  echo "Description"
+  echo "   List the content of EBF-FileManager"
+	echo " "
+	exit 1
+}
+
+function help_fmanager_mkdir() {
+	echo " "
+	echo "Usage:  ebf fmanager mkdir [DIR_NAME]"
+	echo ""
+	echo "Example: "
+	echo "     ebf fmanager mkdir fsroot"
+	echo ""
+	echo "Description"
+	echo "   Create a directory inside EBF-FileManager"
+	echo " "
+	exit 1
+}
+
+function help_fmanager_rm() {
+	echo " "
+	echo "Usage:  ebf fmanager rm [DIR_NAME]"
+	echo ""
+	echo "Example: "
+	echo "    ebf fmanager rm fsroot"
+	echo ""
+	echo "Description"
+	echo "   Delete a directory inside EBF-FileManager"
+	echo " "
+	exit 1
+}
+
+function help_fmanager_upload() {
+	echo " "
+	echo "Usage:  ebf fmanager upload [SRC_FILE_PATH] [DST_FILE_PATH]"
+	echo ""
+	echo "Example: "
+	echo "    ebf fmanager upload /tmp/file1.txt admin/"
+	echo ""
+	echo "Description"
+	echo "    Upload a file to EBF-FileManager Directory or Sub-Directory"
+	echo " "
+	exit 1
+}
+
+function help_fmanager_download() {
+	echo " "
+	echo "Usage:  ebf fmanager download [SRC_FILE_PATH] [DST_FILE_PATH]"
+	echo ""
+	echo "Example: "
+	echo "    ebf fmanager download /tmp/file1.txt admin/"
+	echo ""
+	echo "Description"
+	echo "    Download a file from EBF-FileManager to Local Machine"
+	echo " "
+	exit 1
 }
 
 function execute_api() {
@@ -1057,8 +1382,7 @@ function sdmux_hotplug() {
 function portfw_list() {
   user_authentication
   DEVICE=$OPTION
-	PORTFW_TYPE=$OPTION4
-  OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/portfw/$PORTFW_TYPE/"  --header 'Authorization: token '$AUTH_TOKEN'')
+  OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/portfw/nat/"  --header 'Authorization: token '$AUTH_TOKEN'')
 	COUNT=0
 	RESULT=$(echo $OUTPUT|jq -r .result)
   PORT_LIST=$(echo $OUTPUT|jq -r .data[$COUNT])
@@ -1069,7 +1393,6 @@ function portfw_list() {
     	echo "Rule $COUNT"
     	echo " Device IP: $(echo $PORT_LIST|jq -r .dip)"
     	echo " Zombie Protocol: $(echo $PORT_LIST|jq -r .prot)"
-    	echo " Port Forward Type: $(echo $PORT_LIST|jq -r .type)"
     	echo " Zombie Port: $(echo $PORT_LIST|jq -r .zport)  -->  Device Port: $(echo $PORT_LIST|jq -r .dport)"
     	echo " "
     	PORT_LIST=$(echo $OUTPUT|jq -r .data[$COUNT])
@@ -1095,33 +1418,17 @@ function portfw_list() {
 function portfw_add() {
   user_authentication
   DEVICE=$OPTION
-	PORTFW_TYPE=$OPTION4
-  if [ "$PORTFW_TYPE" == "NAT" ];then
-		DEVICE_IP=$OPTION5
-		DUT_PORT=$OPTION6
-		ZOMBIE_PORT=$OPTION7
-		PROTOCOL=$OPTION8
-		if [ "$OPTION9" == "" ] && [ "$PROTOCOL" != "" ];then
-    	OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/portfw/nat/"  --header 'Content-Type: application/json' --header 'Authorization: token '$AUTH_TOKEN'' --data-raw '{ "device_ip":"'"$DEVICE_IP"'", "dut_port":"'"$DUT_PORT"'", "zombie_port":"'"$ZOMBIE_PORT"'", "pcol":"'"$PROTOCOL"'" }')
-    	RESULT=$(echo $OUTPUT|jq -r .result)
-		else
-			help_device_portfw_add
-			exit 1
-		fi
+	DEVICE_IP=$OPTION4
+	DUT_PORT=$OPTION5
+	ZOMBIE_PORT=$OPTION6
+	PROTOCOL=$OPTION7
+	if [ "$OPTION8" == "" ] && [ "$PROTOCOL" != "" ];then
+  	OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/portfw/nat/"  --header 'Content-Type: application/json' --header 'Authorization: token '$AUTH_TOKEN'' --data-raw '{ "device_ip":"'"$DEVICE_IP"'", "dut_port":"'"$DUT_PORT"'", "zombie_port":"'"$ZOMBIE_PORT"'", "pcol":"'"$PROTOCOL"'" }')
+  	RESULT=$(echo $OUTPUT|jq -r .result)
 	else
-		DEVICE_IP=$OPTION5
-		USERNAME=$OPTION6
-		PASSWORD=$OPTION7
-		DUT_PORT=$OPTION8
-		ZOMBIE_PORT=$OPTION9
-		if [ "$OPTION10" == "" ] && [ "$ZOMBIE_PORT" != "" ];then
-    	OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/portfw/ssh/"  --header 'Content-Type: application/json' --header 'Authorization: token '$AUTH_TOKEN'' --data-raw '{ "dut_ip":"'"$DEVICE_IP"'", "username":"'"$USERNAME"'", "dut_pw":"'"$PASSWORD"'", "dut_port":"'"$DUT_PORT"'", "zombie_port":"'"$ZOMBIE_PORT"'" }')
-    	RESULT=$(echo $OUTPUT|jq -r .result)
-		else
-			help_device_portfw_add
-			exit 1
-		fi
-  fi
+		help_device_portfw_add
+		exit 1
+	fi
   if [ "$RESULT" == "success" ];then
     echo "Successfully Forwarded the port"
   else
@@ -1145,29 +1452,18 @@ function portfw_remove() {
   user_authentication
   DEVICE=$OPTION
   COUNT=0
-	PORTFW_TYPE=$OPTION4
-	if [ "$PORTFW_TYPE" == "nat" ];then
-		DEVICE_IP=$OPTION5
-		DUT_PORT=$OPTION6
-		ZOMBIE_PORT=$OPTION7
-		PROTOCOL=$OPTION8
-		if [ "$OPTION9" == "" ] && [ "$PROTOCOL" != "" ];then
-    	OUTPUT=$(curl -s -k --location --request DELETE "$SERVER_URL/api/v0.2/devices/$DEVICE/portfw/$PORTFW_TYPE/"  --header 'Content-Type: application/json' --header 'Authorization: token '$AUTH_TOKEN'' --data-raw '{ "device_ip":"'"$DEVICE_IP"'", "dut_port":"'"$DUT_PORT"'", "zombie_port":"'"$ZOMBIE_PORT"'", "pcol":"'"$PROTOCOL"'" }')
-    	RESULT=$(echo $OUTPUT|jq -r .result)
-		else
-			help_device_portfw_remove
-			exit 1
-		fi
+	DEVICE_IP=$OPTION4
+	DUT_PORT=$OPTION5
+	ZOMBIE_PORT=$OPTION6
+	PROTOCOL=$OPTION7
+	if [ "$OPTION8" == "" ] && [ "$PROTOCOL" != "" ];then
+  	OUTPUT=$(curl -s -k --location --request DELETE "$SERVER_URL/api/v0.2/devices/$DEVICE/portfw/nat/"  --header 'Content-Type: application/json' --header 'Authorization: token '$AUTH_TOKEN'' --data-raw '{ "device_ip":"'"$DEVICE_IP"'", "dut_port":"'"$DUT_PORT"'", "zombie_port":"'"$ZOMBIE_PORT"'", "pcol":"'"$PROTOCOL"'" }')
+  	RESULT=$(echo $OUTPUT|jq -r .result)
 	else
-		ZOMBIE_PORT=$OPTION5
-		if [ "$OPTION6" == "" ] && [ "$ZOMBIE_PORT" != "" ];then
-    	OUTPUT=$(curl -s -k --location --request DELETE "$SERVER_URL/api/v0.2/devices/$DEVICE/portfw/$PORTFW_TYPE/?ports=$ZOMBIE_PORT"  --header 'Content-Type: application/json' --header 'Authorization: token '$AUTH_TOKEN'' )
-    	RESULT=$(echo $OUTPUT|jq -r .result)
-		else
-			help_device_portfw_remove
-			exit 1
-		fi
-  fi
+		help_device_portfw_remove
+		exit 1
+	fi
+
 	if [ "$RESULT" == "success" ];then
 		echo "Successfully Deleted the port forwarded rule"
 	else
@@ -1301,6 +1597,43 @@ function serial_upload() {
 	fi
 }
 
+function ssh_import_key() {
+	user_authentication
+  DEVICE=$OPTION
+	DEVICE_IP=$OPTION4
+	DEVICE_USERNAME=$OPTION5
+	DEVICE_PASSWORD=$OPTION6
+	JSON_STRING="--form device_ip=$DEVICE_IP --form username=$DEVICE_USERNAME --form password=$DEVICE_PASSWORD"
+	OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/import/key/ssh/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING )
+	RESULT=$(echo $OUTPUT|jq -r .result)
+	MESSAGE=$(echo $OUTPUT|jq -r .message)
+	if [ "$RESULT" == "success" ];then
+		echo "Successfully Zombie SSH-KEY Imported to \"$DEVICE\""
+		if cat  ~/.ebfconfig | grep ^"$DEVICE:IP" >/dev/null; then
+			OLD_DEVICE_IP=$(cat ~/.ebfconfig|grep $DEVICE:IP|cut -d ':' -f3)
+			OLD_USERNAME=$(cat ~/.ebfconfig|grep $DEVICE:USERNAME|cut -d ':' -f3)
+			sed -i "s/$DEVICE:IP:$OLD_DEVICE_IP/$DEVICE:IP:$DEVICE_IP/gi" ~/.ebfconfig
+			sed -i "s/$DEVICE:USERNAME:$OLD_USERNAME/$DEVICE:USERNAME:$DEVICE_USERNAME/gi" ~/.ebfconfig
+		else
+			echo "$DEVICE:IP:$DEVICE_IP" >> ~/.ebfconfig
+			echo "$DEVICE:USERNAME:$DEVICE_USERNAME" >> ~/.ebfconfig
+		fi
+	else
+		if [ "$RESULT" == "" ];then
+			echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
+			exit 1
+		fi
+		FAILURE_MSG=$(echo $MESSAGE|grep -ow "No Device matches")
+		if [ "$FAILURE_MSG" ];then
+			echo "[ERROR] Device $DEVICE doesn't exsist"
+		else
+			echo $MESSAGE
+		fi
+		exit 1
+	fi
+
+}
+
 function execute_ssh_command() {
   user_authentication
   DEVICE=$OPTION
@@ -1309,7 +1642,14 @@ function execute_ssh_command() {
 		DEVICE_COMMAND=$(jq -aRs . <<< $DEVICE_COMMAND)
 		DEVICE_COMMAND=${DEVICE_COMMAND#\"}
 		DEVICE_COMMAND=${DEVICE_COMMAND%\"}
-		OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/run/ssh/"  --header 'Content-Type: application/json' --header 'Authorization: token '$AUTH_TOKEN'' --data-raw '{ "command": "'"$DEVICE_COMMAND"'" }')
+		DEVICE_IP=$(cat ~/.ebfconfig|grep $DEVICE:IP|cut -d ':' -f3)
+		DEVICE_USERNAME=$(cat ~/.ebfconfig|grep $DEVICE:USERNAME|cut -d ':' -f3)
+		if [ "$DEVICE_IP" == "" ] || [ "$DEVICE_USERNAME" == "" ];then
+			echo "No SSH-KEY is found for device \"$DEVICE\", Please import key first"
+			help_device_ssh_import_key
+			exit 1
+		fi
+		OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/run/ssh/"  --header 'Content-Type: application/json' --header 'Authorization: token '$AUTH_TOKEN'' --data-raw '{ "command": "'"$DEVICE_COMMAND"'", "device_ip":"'"$DEVICE_IP"'", "username":"'"$DEVICE_USERNAME"'" }')
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		RETURN_CODE=$(echo $OUTPUT|jq -r .data.return_code)
     if [ "$RESULT" == "success" ];then
@@ -1346,6 +1686,13 @@ function execute_ssh_command() {
 function ssh_download() {
 	user_authentication
   DEVICE=$OPTION
+	DEVICE_IP=$(cat ~/.ebfconfig|grep $DEVICE:IP|cut -d ':' -f3)
+	DEVICE_USERNAME=$(cat ~/.ebfconfig|grep $DEVICE:USERNAME|cut -d ':' -f3)
+	if [ "$DEVICE_IP" == "" ] || [ "$DEVICE_USERNAME" == "" ];then
+		echo "No SSH-KEY is found for device \"$DEVICE\", Please import key first"
+		help_device_ssh_import_key
+		exit 1
+	fi
   SRC_FILE_PATH=${OPTION4%/}
 	SRC_FILE_DIR=${SRC_FILE_PATH%/*}
 	FILE_NAME=${SRC_FILE_PATH##*/}
@@ -1362,8 +1709,8 @@ function ssh_download() {
 		DST_FILE_PATH="$DST_FILE_PATH"
 	fi
   if [ "$SRC_FILE_PATH" != "" ];then
-    OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/download/ssh?compress=true&path=$SRC_FILE_PATH" --header 'Authorization: token '$AUTH_TOKEN'' --output ${TMP_DIR}/$FILE_NAME.tar.gz )
-		tar -xf ${TMP_DIR}/$FILE_NAME.tar.gz -C ${TMP_DIR} 2>/dev/null && cp -rf ${TMP_DIR}${SRC_FILE_DIR}/* $DST_FILE_PATH 2>/dev/null
+		OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/download/ssh?compress=true&path=$SRC_FILE_PATH&device_ip=$DEVICE_IP&username=$DEVICE_USERNAME" --header 'Authorization: token '$AUTH_TOKEN'' --output ${TMP_DIR}/$FILE_NAME.tar.gz )
+		tar -xf ${TMP_DIR}/$FILE_NAME.tar.gz -C ${TMP_DIR} 2>/dev/null && rm -rf ${TMP_DIR}/$FILE_NAME.tar.gz && cp -rf ${TMP_DIR}${SRC_FILE_DIR}/* $DST_FILE_PATH 2>/dev/null
 		if [ $? -eq 0 ];then
 			echo "Successfully Downloaded \"$FILE_NAME\" into \"$DST_FILE_PATH\""
 			rm -rf $TMP_DIR
@@ -1384,17 +1731,27 @@ function ssh_download() {
 function ssh_upload() {
   user_authentication
   DEVICE=$OPTION
+	JSON_STRING=""
 	SRC_FILE_PATH=$OPTION4
 	DST_FILE_PATH=${OPTION5}
 	FILE_PERMISSIONS=${OPTION6}
+	DEVICE_IP=$(cat ~/.ebfconfig|grep $DEVICE:IP|cut -d ':' -f3)
+	DEVICE_USERNAME=$(cat ~/.ebfconfig|grep $DEVICE:USERNAME|cut -d ':' -f3)
+	if [ "$DEVICE_IP" == "" ] || [ "$DEVICE_USERNAME" == "" ];then
+		echo "No SSH-KEY is found for device \"$DEVICE\", Please import key first"
+		help_device_ssh_import_key
+		exit 1
+	fi
   if [ -f $SRC_FILE_PATH ];then
-	  if [ -z "$FILE_PERMISSIONS" ] ; then
+		if [ -z "$FILE_PERMISSIONS" ]; then
 		  FILE_PERMISSIONS=$(stat -c '%a' $SRC_FILE_PATH)
 	  fi
 		if [ "$FILE_PERMISSIONS" != "" ];then
-			OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/upload/ssh/" --header 'Authorization: token '$AUTH_TOKEN'' --form 'file=@'$SRC_FILE_PATH'' --form 'path='$DST_FILE_PATH'' --form 'permission='$FILE_PERMISSIONS'' )
+			JSON_STRING="--form file=@$SRC_FILE_PATH --form path=$DST_FILE_PATH --form device_ip=$DEVICE_IP --form username=$DEVICE_USERNAME --form permission=$FILE_PERMISSIONS"
+			OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/upload/ssh/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING )
 		else
-    	OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/upload/ssh/" --header 'Authorization: token '$AUTH_TOKEN'' --form 'file=@'$SRC_FILE_PATH'' --form 'path='$DST_FILE_PATH'' )
+			JSON_STRING="--form file=@$SRC_FILE_PATH --form path=$DST_FILE_PATH --form device_ip=$DEVICE_IP --form username=$DEVICE_USERNAME"
+    	OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/upload/ssh/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING )
 		fi
 	elif [ -d $SRC_FILE_PATH ];then
 		TMP_DIR=$(mktemp -d)
@@ -1403,7 +1760,8 @@ function ssh_upload() {
 		DIR_PATH=${SRC_FILE_PATH%/*}
 	  DIR_NAME=${SRC_FILE_PATH##*/}
 		tar -czf $TMP_DIR/$DIR_NAME.tar.gz -C $DIR_PATH $DIR_NAME
-		OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/upload/ssh/" --header 'Authorization: token '$AUTH_TOKEN'' --form 'file=@'$TMP_DIR/$DIR_NAME.tar.gz'' --form 'path='$DST_FILE_PATH'' --form 'extract=true' )
+		JSON_STRING="--form file=@$TMP_DIR/$DIR_NAME.tar.gz --form path=$DST_FILE_PATH --form device_ip=$DEVICE_IP --form username=$DEVICE_USERNAME --form extract=true )"
+		OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/upload/ssh/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING )
 		rm -rf $TMP_DIR
 	else
 		help_device_ssh_upload
@@ -1414,7 +1772,7 @@ function ssh_upload() {
 	MESSAGE=$(echo $OUTPUT|jq -r .message)
 	if [ "$RESULT" == "success" ];then
 		echo ""
-		echo "Successfully uploaded \"$DIR_NAME\""
+		echo "Successfully uploaded \"${SRC_FILE_PATH##*/}\""
 	else
 		if [ "$RESULT" == "" ];then
 		 echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
@@ -1596,51 +1954,7 @@ function list_netboot_directory() {
 			SYMLINK_TARGET=$(echo $LIST_DATA|jq -r .symlink_target)
 			COUNT=`expr $COUNT + 1`
 			LIST_DATA=$(echo $OUTPUT|jq -r .data[$COUNT])
-			echo "$FILE_OR_DIR_NAME   $TYPE  $OWNER  $SIZE  $DATA  $SYMLINK_TARGET"
-		done
-	elif [ "$RESULT" == "success" ] && [ "$LIST_DATA" == "null" ];then
-		echo "Directory is Empty"
-		exit 1
-	else
-		if [ "$RESULT" == "" ];then
-			echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
-			exit 1
-		fi
-		MESSAGE=$(echo $OUTPUT|jq -r .message)
-		FAILURE_MSG=$(echo $MESSAGE|grep -ow "No Device matches")
-		if [ "$FAILURE_MSG" ];then
-			echo "[ERROR] Device $DEVICE doesn't exsist"
-		else
-			echo $MESSAGE
-		fi
-    exit 1
-	fi
-}
-
-function list_bfc_directory() {
-	user_authentication
-	DEVICE=$OPTION
-	DIR_PATH_OPTIONAL=$OPTION4
-	COUNT=0
-	if [ "$DIR_PATH_OPTIONAL" != "" ];then
-		OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/ebf/fmanager/$DIR_PATH_OPTIONAL"  --header 'Authorization: token '$AUTH_TOKEN'')
-	else
-		OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/ebf/fmanager/"  --header 'Authorization: token '$AUTH_TOKEN'')
-	fi
-	RESULT=$(echo $OUTPUT|jq -r .result)
-	LIST_DATA=$(echo $OUTPUT|jq -r .data[$COUNT])
-	if [ "$RESULT" == "success" ] && [ "$LIST_DATA" != "null" ];then
-		while [ "$LIST_DATA" != "null" ];
-		do
-			FILE_OR_DIR_NAME=$(echo $LIST_DATA|jq -r .file_or_dir_name)
-			SIZE=$(echo $LIST_DATA|jq -r .size)
-			TYPE=$(echo $LIST_DATA|jq -r .type)
-			OWNER=$(echo $LIST_DATA|jq -r .owner)
-			DATE=$(echo $LIST_DATA|jq -r .modified_date)
-			SYMLINK_TARGET=$(echo $LIST_DATA|jq -r .symlink_target)
-			COUNT=`expr $COUNT + 1`
-			LIST_DATA=$(echo $OUTPUT|jq -r .data[$COUNT])
-			echo "$FILE_OR_DIR_NAME   $TYPE  $OWNER  $SIZE  $DATA  $SYMLINK_TARGET"
+			printf "%-30s %-10s %-12s %-8s %-15s %-15s \n" "$FILE_OR_DIR_NAME" "$TYPE" "$OWNER" "$SIZE" "$DATE" "$SYMLINK_TARGET"
 		done
 	elif [ "$RESULT" == "success" ] && [ "$LIST_DATA" == "null" ];then
 		echo "Directory is Empty"
@@ -1665,7 +1979,12 @@ function mkdir_netboot_directory() {
 	user_authentication
 	DEVICE=$OPTION
 	DIR_PATH=$OPTION4
-	OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/fmanager/dir/$DIR_PATH"  --header 'Authorization: token '$AUTH_TOKEN'')
+	if [ `expr "$DIR_PATH" : ".*[A-Za-z0-9.()~!@$^&+={};-].*"` -gt 0 ]; then
+		OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/fmanager/dir/$DIR_PATH/"  --header 'Authorization: token '$AUTH_TOKEN'')
+	else
+    echo "[ERROR] Directory Name contains special characters"
+		exit 1
+	fi
 	RESULT=$(echo $OUTPUT|jq -r .result)
 	MESSAGE=$(echo $OUTPUT|jq -r .message)
 	if [ "$RESULT" == "success" ];then
@@ -1711,7 +2030,7 @@ function delete_netboot_directory() {
 	fi
 }
 
-function netboot_upload() {
+function netboot_transfer() {
 	user_authentication
 	DEVICE=$OPTION
 	OPREATION=$OPTION4
@@ -1732,7 +2051,7 @@ function netboot_upload() {
 	    -t | --tool )
 	        TOOL=$2
 					if [ "$TOOL" != "tar" ] && [ "$TOOL" != "unzip" ] && [ "$TOOL" != "cp" ];then
-						help_device_netboot_upload
+						help_device_netboot_transfer
 						exit 1
 					fi
 	        shift
@@ -1748,13 +2067,13 @@ function netboot_upload() {
 	    -r | --remove-after )
 	        REMOVE_AFTER=$(echo $2| tr 'A-Z' 'a-z')
 					if [ "$REMOVE_AFTER" != "on" ] && [ "$REMOVE_AFTER" != "off" ];then
-						help_device_netboot_upload
+						help_device_netboot_transfer
 						exit 1
 					fi
 	        shift
 	        ;;
 	     * )
-	        help_device_netboot_upload
+	        help_device_netboot_transfer
 					exit 1
 	      ;;
 	  esac
@@ -1763,7 +2082,7 @@ function netboot_upload() {
 	if [ "$OPREATION" != "local" ] && [ "$OPREATION" != "server" ] && [ "$OPREATION" != "status" ];then
 		echo ""
 		echo "[ERROR] Please provide the file location whether it is present in local or server"
-		help_device_netboot_upload
+		help_device_netboot_transfer
 		exit 1
 	fi
 	if [ "$FILE_PATH" != "" ] && [ -f $FILE_PATH ] && [ "$OPREATION" == "local" ];then
@@ -1944,7 +2263,80 @@ function netboot_upload() {
 		fi
 	else
 		echo "[ERROR] Check file/directory \"$FILE_PATH\" whether it exsist or not"
-		help_device_netboot_upload
+		help_device_netboot_transfer
+		exit 1
+	fi
+}
+
+function netboot_download() {
+	user_authentication
+  DEVICE=$OPTION
+  SRC_FILE_PATH=${OPTION4%/}
+	FILE_NAME=${SRC_FILE_PATH##*/}
+	DST_FILE_PATH=${OPTION5%/}
+	if [ ! -d "$DST_FILE_PATH" ] && [ "$DST_FILE_PATH" != "" ];then
+		PARENT_DST_FILE_PATH=${DST_FILE_PATH%/*}
+		if [ ! -d "$PARENT_DST_FILE_PATH" ];then
+		 echo "[ERROR] Destination download path is not Valid!"
+		 help_device_netboot_download
+		 exit 1
+	  else
+			FILE_NAME=$DST_FILE_PATH
+		fi
+	elif [ -d "$DST_FILE_PATH" ];then
+		FILE_NAME="$DST_FILE_PATH/$FILE_NAME"
+	else
+		FILE_NAME=$FILE_NAME
+	fi
+
+  if [ "$SRC_FILE_PATH" != "" ];then
+    OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/fmanager/download/$SRC_FILE_PATH/" --header 'Authorization: token '$AUTH_TOKEN'' --output $FILE_NAME )
+		if [ $? -eq 0 ];then
+			echo "Successfully Downloaded \"$SRC_FILE_PATH\" into \"$FILE_NAME\""
+		else
+			echo "[ERROR] Couldn't download \"$SRC_FILE_PATH\" , Check whether the file exsist or not"
+			help_device_netboot_download
+			exit 1
+		fi
+  else
+		echo "[ERROR] Source FileName shouldn't be empty"
+		help_device_netboot_download
+    exit 1
+  fi
+}
+
+function netboot_upload() {
+	user_authentication
+	DEVICE=$OPTION
+	SRC_FILE_PATH=$OPTION4
+	DST_FILE_PATH=$OPTION5
+	JSON_STRING=""
+	if [ -f $SRC_FILE_PATH ] && [ "$DST_FILE_PATH" != "" ];then
+		JSON_STRING="--form file=@$SRC_FILE_PATH --form path_to_upload_file=$DST_FILE_PATH"
+		OUTPUT=$(curl -s -k --location --request PUT "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/fmanager/dir/$DST_FILE_PATH/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING )
+		RESULT=$(echo $OUTPUT|jq -r .result)
+		MESSAGE=$(echo $OUTPUT|jq -r .message)
+		if [ "$RESULT" == "success" ];then
+			echo "Successfully $MESSAGE"
+		else
+			if [ "$RESULT" == "" ];then
+				echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
+				exit 1
+			fi
+			FAILURE_MSG=$(echo $MESSAGE|grep -ow "No Device matches")
+			if [ "$FAILURE_MSG" ];then
+				echo "[ERROR] Device $DEVICE doesn't exsist"
+			else
+				echo $MESSAGE
+			fi
+			exit 1
+		fi
+	else
+		if [ "$OPTION2" == "usb" ];then
+			help_device_usb_upload
+		else
+			help_device_sdcard_upload
+		fi
 		exit 1
 	fi
 }
@@ -2005,7 +2397,11 @@ function sdcard_info(){
 	if [ "$RESULT" == "success" ] && [ "$PARTITIONS_DATA" != "null" ];then
 			SD_DEVICE=$(echo $OUTPUT|jq -r .data.device)
 			TOTAL_SIZE=$(echo $OUTPUT|jq -r .data.total_size)
-			echo "SD CRAD Information"
+			if [ "$OPTION2" == "usb" ];then
+				echo "USB Information"
+			else
+				echo "SD CRAD Information"
+			fi
 			echo ""
 			echo "$SD_DEVICE: $TOTAL_SIZE"
 			PARTITIONS_DATA=$(echo $OUTPUT|jq -r .data.partitions[$COUNT])
@@ -2040,11 +2436,19 @@ function sdcard_side(){
 	user_authentication
 	DEVICE=$OPTION
 	COUNT=0
-	OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdmux/"  --header 'Authorization: token '$AUTH_TOKEN'' )
+	if [ "$OPTION2" == "usb" ];then
+		OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/usbmux/"  --header 'Authorization: token '$AUTH_TOKEN'' )
+	else
+		OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdmux/"  --header 'Authorization: token '$AUTH_TOKEN'' )
+	fi
 	RESULT=$(echo $OUTPUT|jq -r .result)
 	DATA=$(echo $OUTPUT|jq -r .data)
 	if [ "$RESULT" == "success" ];then
-		echo "SDCard is connected to \"$DATA\" side"
+		if [ "$OPTION2" == "usb" ];then
+			echo "USB is connected to \"$DATA\" side"
+		else
+			echo "SDCard is connected to \"$DATA\" side"
+		fi
 	else
 		if [ "$RESULT" == "" ];then
 			echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
@@ -2066,11 +2470,23 @@ function sdcard_switch(){
 	DEVICE=$OPTION
 	SWITCH_SIDE=$(echo $OPTION4| tr 'A-Z' 'a-z')
 	COUNT=0
-	OUTPUT=$(curl -s -k --location --request PUT "$SERVER_URL/api/v0.2/devices/$DEVICE/sdmux/switch/$SWITCH_SIDE/"  --header 'Authorization: token '$AUTH_TOKEN'' )
+	if [ "$OPTION2" == "usb" ];then
+		MUX_MODE="usbmux"
+		DEVICE_TYPE="USB"
+	else
+		MUX_MODE="sdmux"
+		DEVICE_TYPE="SDCard"
+	fi
+
+	if [ "$SWITCH_SIDE" == "side" ];then
+		OUTPUT=$(curl -s -k --location --request PUT "$SERVER_URL/api/v0.2/devices/$DEVICE/$MUX_MODE/switch/"  --header 'Authorization: token '$AUTH_TOKEN'' )
+	else
+		OUTPUT=$(curl -s -k --location --request PUT "$SERVER_URL/api/v0.2/devices/$DEVICE/$MUX_MODE/switch/$SWITCH_SIDE/"  --header 'Authorization: token '$AUTH_TOKEN'' )
+	fi
 	RESULT=$(echo $OUTPUT|jq -r .result)
 	DATA=$(echo $OUTPUT|jq -r .data)
 	if [ "$RESULT" == "success" ];then
-		echo "SDCard is switched to $DATA side"
+		echo "$DEVICE_TYPE is switched to \"$DATA\" side"
 	else
 		if [ "$RESULT" == "" ];then
 			echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
@@ -2110,7 +2526,7 @@ function list_sdcard_directory() {
 			SYMLINK_TARGET=$(echo $LIST_DATA|jq -r .symlink_target)
 			COUNT=`expr $COUNT + 1`
 			LIST_DATA=$(echo $OUTPUT|jq -r .data[$COUNT])
-			echo "$FILE_OR_DIR_NAME   $TYPE  $OWNER  $SIZE  $DATA  $SYMLINK_TARGET"
+			printf "%-30s %-10s %-12s %-8s %-15s %-15s \n" "$FILE_OR_DIR_NAME" "$TYPE" "$OWNER" "$SIZE" "$DATE" "$SYMLINK_TARGET"
 		done
 	elif [ "$RESULT" == "success" ] && [ "$LIST_DATA" == "null" ];then
 		echo "Directory is Empty"
@@ -2135,7 +2551,19 @@ function mkdir_sdcard_directory() {
 	user_authentication
 	DEVICE=$OPTION
 	DIR_PATH=$OPTION4
-	OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/fmanager/dir/$DIR_PATH"  --header 'Authorization: token '$AUTH_TOKEN'')
+	SDCARD_INFO=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/info/"  --header 'Authorization: token '$AUTH_TOKEN'' )
+	PARTIIONS=$(echo $SDCARD_INFO|jq -r '.data."partitions"[].dev')
+	REQUESTED_PARTITION_NAME=$(echo ${DIR_PATH#/*}|cut -d '/' -f1)
+	if [[ ! "${PARTIIONS[@]}" =~ "${REQUESTED_PARTITION_NAME}" ]]; then
+		echo "[ERROR] Not a Valid Partition Provided to create a directory"
+		exit 1
+	fi
+	if [ `expr "$DIR_PATH" : ".*[A-Za-z0-9.()~!@$^&+={};-].*"` -gt 0 ]; then
+		OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/fmanager/dir/$DIR_PATH/"  --header 'Authorization: token '$AUTH_TOKEN'')
+	else
+    echo "[ERROR] Directory Name contains special characters"
+		exit 1
+	fi
 	RESULT=$(echo $OUTPUT|jq -r .result)
 	MESSAGE=$(echo $OUTPUT|jq -r .message)
 	if [ "$RESULT" == "success" ];then
@@ -2191,7 +2619,11 @@ function format_sdcard() {
 		FORMAT=$(echo $PARAM|cut -d "," -s -f2)
 		if [ "$PARTITION" == "" ] || [ "$FORMAT" == "" ];then
 			echo "[ERROR]: Not a valid options"
-			help_sdcard_format
+			if [ "$OPTION2" == "usb" ];then
+				help_usb_format
+			else
+   			help_sdcard_format
+			fi
 			exit 1
 		fi
 		if [ "$JSON_STRING" == "" ];then
@@ -2222,7 +2654,11 @@ function format_sdcard() {
 			fi
     	exit 1
 		fi
-		help_sdcard_format
+		if [ "$OPTION2" == "usb" ];then
+			help_usb_format
+		else
+			help_sdcard_format
+		fi
 		exit 1
 	fi
 }
@@ -2237,28 +2673,29 @@ function partition_sdcard() {
 		LABEL=$(echo $PARAM|cut -d "," -s -f1)
 		SIZE=$(echo $PARAM|cut -d "," -s -f2)
 		TYPE=$(echo $PARAM|cut -d "," -s -f3)
-		BOOTABLE=$(echo $PARAM|cut -d "," -s -f4)
 		if [ "$LABEL" == "" ] || [ "$TYPE" == "" ] || [ "$SIZE" == "" ];then
-			help_sdcard_partition
+			if [ "$OPTION2" == "usb" ];then
+				help_usb_partition
+			else
+   			help_sdcard_partition
+			fi
 			exit 1
 		fi
 		if [ "$JSON_STRING" == "" ];then
-			if [ "$BOOTABLE" != "" ];then
-				JSON_STRING="{\"label\":\"$LABEL\",\"size\":\"$SIZE\",\"type\":\"$TYPE\",\"bootable\":\"$BOOTABLE\"}"
-			else
-				JSON_STRING="{\"label\":\"$LABEL\",\"size\":\"$SIZE\",\"type\":\"$TYPE\"}"
-			fi
+			JSON_STRING="{\"label\":\"$LABEL\",\"size\":\"$SIZE\",\"type\":\"$TYPE\"}"
+			BOOTABLE=$(echo $PARAM|cut -d "," -s -f4|tr 'A-Z' 'a-z')
 		else
-			if [ "$BOOTABLE" != "" ];then
-				JSON_STRING="${JSON_STRING},{\"label\":\"$LABEL\",\"size\":\"$SIZE\",\"type\":\"$TYPE\",\"bootable\":\"$BOOTABLE\"}"
-			else
-				JSON_STRING="${JSON_STRING},{\"label\":\"$LABEL\",\"size\":\"$SIZE\",\"type\":\"$TYPE\"}"
-			fi
+			JSON_STRING="${JSON_STRING},{\"label\":\"$LABEL\",\"size\":\"$SIZE\",\"type\":\"$TYPE\"}"
 		fi
 		shift
 	done
 	if [ "$JSON_STRING" != "" ];then
-		OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/partition/"  --header 'Authorization: token '$AUTH_TOKEN'' --header 'Content-Type: application/json' --data-raw '{ "partitions": [ '$JSON_STRING' ] }' )
+		if [ "$BOOTABLE" != "" ] && [ "$BOOTABLE" == "true" ];then
+			JSON_STRING_BOOTABLE="\"bootable\":\"True\""
+			OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/partition/"  --header 'Authorization: token '$AUTH_TOKEN'' --header 'Content-Type: application/json' --data-raw '{ "partitions": [ '$JSON_STRING' ], '$JSON_STRING_BOOTABLE' }' )
+		else
+			OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/partition/"  --header 'Authorization: token '$AUTH_TOKEN'' --header 'Content-Type: application/json' --data-raw '{ "partitions": [ '$JSON_STRING' ] }' )
+		fi
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		if [ "$RESULT" == "success" ];then
 				echo "Successfully created the partitions"
@@ -2401,7 +2838,11 @@ function sdcard_backup() {
 			exit 1
 		fi
 	else
-		help_device_backup
+		if [ "$OPTION2" == "usb" ];then
+			help_device_usb_backup
+		else
+			help_device_sdcard_backup
+		fi
 	fi
 }
 
@@ -2500,7 +2941,7 @@ function sdcard_flash() {
 			JSON_STRING="${JSON_STRING}  --form  delete_after=${REMOVE_AFTER}"
 		fi
 		if [ "$BMAP_FILE" != "" ];then
-			JSON_STRING="${JSON_STRING}  --form  bmap_file=${BMAP_FILE}"
+			JSON_STRING="${JSON_STRING}  --form  bmap_file=@${BMAP_FILE}"
 		fi
 		OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/flash/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING )
 		RESULT=$(echo $OUTPUT|jq -r .result)
@@ -2674,6 +3115,506 @@ function sdcard_flash() {
 	fi
 }
 
+function sdcard_download() {
+	user_authentication
+  DEVICE=$OPTION
+  SRC_FILE_PATH=${OPTION4%/}
+	FILE_NAME=${SRC_FILE_PATH##*/}
+	DST_FILE_PATH=${OPTION5%/}
+	if [ ! -d "$DST_FILE_PATH" ] && [ "$DST_FILE_PATH" != "" ];then
+		PARENT_DST_FILE_PATH=${DST_FILE_PATH%/*}
+		if [ ! -d "$PARENT_DST_FILE_PATH" ];then
+		 echo "[ERROR] Destination download path is not Valid!"
+		 help_device_netboot_download
+		 exit 1
+	  else
+			FILE_NAME=$DST_FILE_PATH
+		fi
+	elif [ -d "$DST_FILE_PATH" ];then
+		FILE_NAME="$DST_FILE_PATH/$FILE_NAME"
+	else
+		FILE_NAME=$FILE_NAME
+	fi
+
+  if [ "$SRC_FILE_PATH" != "" ];then
+    OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/fmanager/download/$SRC_FILE_PATH/" --header 'Authorization: token '$AUTH_TOKEN'' --output $FILE_NAME )
+		if [ $? -eq 0 ];then
+			echo "Successfully Downloaded \"$SRC_FILE_PATH\" into \"$FILE_NAME\""
+		else
+			echo "[ERROR] Couldn't download \"$SRC_FILE_PATH\" , Check whether the file exsist or not"
+			help_device_sdcard_download
+			exit 1
+		fi
+  else
+		echo "[ERROR] Source FileName shouldn't be empty"
+		help_device_sdbard_download
+    exit 1
+  fi
+}
+
+function sdcard_upload() {
+	user_authentication
+	DEVICE=$OPTION
+	SRC_FILE_PATH=$OPTION4
+	DST_FILE_PATH=$OPTION5
+	JSON_STRING=""
+	if [ -f $SRC_FILE_PATH ] && [ "$DST_FILE_PATH" != "" ];then
+		JSON_STRING="--form file=@$SRC_FILE_PATH --form path_to_upload_file=$DST_FILE_PATH"
+		OUTPUT=$(curl -s -k --location --request PUT "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/fmanager/dir/$DST_FILE_PATH/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING )
+		RESULT=$(echo $OUTPUT|jq -r .result)
+		MESSAGE=$(echo $OUTPUT|jq -r .message)
+		if [ "$RESULT" == "success" ];then
+			echo "Successfully $MESSAGE"
+		else
+			if [ "$RESULT" == "" ];then
+				echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
+				exit 1
+			fi
+			FAILURE_MSG=$(echo $MESSAGE|grep -ow "No Device matches")
+			if [ "$FAILURE_MSG" ];then
+				echo "[ERROR] Device $DEVICE doesn't exsist"
+			else
+				echo $MESSAGE
+			fi
+			exit 1
+		fi
+	else
+		if [ "$OPTION2" == "usb" ];then
+			help_device_usb_upload
+		else
+			help_device_sdcard_upload
+		fi
+		exit 1
+	fi
+}
+
+function usb_flash() {
+	user_authentication
+	DEVICE=$OPTION
+	OPREATION=$OPTION4
+	USB_JOB_ID=$OPTION5
+	JSON_STRING=""
+	PARTITION=""
+	FILE_PATH=""
+	TOOL=""
+	USB_BACKUP=""
+	CMD_ARGS=""
+	MKFS_FLAG=""
+	REMOVE_AFTER=""
+	BMAP_FILE=""
+	while [ "$1" != "" ];
+	do
+		 case $1 in
+			-p | --partition )
+					PARTITION=$2
+					shift
+					;;
+			-f | --file )
+					FILE_PATH=$2
+					shift
+					;;
+			-t | --tool )
+					TOOL=$2
+					if [ "$TOOL" != "tar" ] && [ "$TOOL" != "unzip" ] && [ "$TOOL" != "cp" ] && [ "$TOOL" != "dd" ] && [ "$TOOL" != "zcat_dd" ] && [ "$TOOL" != "bmaptool" ];then
+						help_device_usb_flash
+						exit 1
+					fi
+					shift
+					;;
+			-b | --backup )
+					USB_BACKUP=$(echo $2| tr 'A-Z' 'a-z')
+					if [ "$USB_BACKUP" != "on" ] && [ "$USB_BACKUP" != "off" ];then
+						help_device_usb_flash
+						exit 1
+					fi
+					shift
+					;;
+			-a | --cmd-args )
+					CMD_ARGS=$2
+					shift
+					;;
+			-m | --mkfs )
+					MKFS_FLAG=$(echo $2| tr 'A-Z' 'a-z' )
+					if [ "$MKFS_FLAG" != "on" ] && [ "$MKFS_FLAG" != "off" ];then
+						help_device_usb_flash
+						exit 1
+					fi
+					shift
+					;;
+			-r | --remove-after )
+					REMOVE_AFTER=$(echo $2| tr 'A-Z' 'a-z' )
+					if [ "$REMOVE_AFTER" != "on" ] && [ "$REMOVE_AFTER" != "off" ];then
+						help_device_usb_flash
+						exit 1
+					fi
+					shift
+					;;
+			-bmap | --bmap-file)
+					BMAP_FILE=$2
+					shift
+					;;
+			 *)
+				help_device_usb_flash
+				exit 1
+				;;
+		esac
+		shift
+	done
+	if [ "$FILE_PATH" != "" ] && [ -f $FILE_PATH ] && [ "$OPREATION" == "local" ] && [ "$PARTITION" != "" ];then
+		if [ "$JSON_STRING" == "" ];then
+			 JSON_STRING="--form file=@$FILE_PATH"
+		fi
+		if [ "$PARTITION" != "" ];then
+			JSON_STRING="${JSON_STRING}  --form partition=${PARTITION}"
+		fi
+		if [ "$TOOL" != "" ];then
+			JSON_STRING="${JSON_STRING}  --form  flash_tool=${TOOL}"
+		fi
+		if [ "$USB_BACKUP" != "" ];then
+			JSON_STRING="${JSON_STRING}  --form  backup=${USB_BACKUP}"
+		fi
+		if [ "$CMD_ARGS" != "" ];then
+			JSON_STRING="${JSON_STRING}  --form  cmd_args=${CMD_ARGS}"
+		fi
+		if [ "$MKFS_FLAG" != "" ];then
+			JSON_STRING="${JSON_STRING}  --form  mkfs=${MKFS_FLAG}"
+		fi
+		if [ "$REMOVE_AFTER" != "" ];then
+			JSON_STRING="${JSON_STRING}  --form  delete_after=${REMOVE_AFTER}"
+		fi
+		if [ "$BMAP_FILE" != "" ];then
+			JSON_STRING="${JSON_STRING}  --form  bmap_file=@${BMAP_FILE}"
+		fi
+		OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/usb/flash/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING )
+		RESULT=$(echo $OUTPUT|jq -r .result)
+		if [ "$RESULT" == "success" ];then
+			JOB_ID=$(echo $OUTPUT|jq -r .data.job_id)
+			PROGRESS_URL=$(echo $OUTPUT|jq -r .data.progress_url)
+			echo "JOB-ID :       $JOB_ID"
+			echo "PROGRESS_URL : $PROGRESS_URL "
+		else
+			if [ "$RESULT" == "" ];then
+				echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
+				exit 1
+			fi
+			MESSAGE=$(echo $OUTPUT|jq -r .message)
+			FAILURE_MSG=$(echo $MESSAGE|grep -ow "No Device matches")
+			if [ "$FAILURE_MSG" ];then
+				echo "[ERROR] Device $DEVICE doesn't exsist"
+			else
+				echo $MESSAGE
+			fi
+			exit 1
+		fi
+	elif [ "$FILE_PATH" != "" ] && [ "$OPREATION" == "server" ] && [ "$PARTITION" != "" ];then
+		if [ "$JSON_STRING" == "" ];then
+			 JSON_STRING="\"file\":\"$FILE_PATH\""
+		fi
+		if [ "$PARTITION" != "" ];then
+			JSON_STRING="${JSON_STRING},\"partition\":\"${PARTITION}\""
+		fi
+		if [ "$TOOL" != "" ];then
+			JSON_STRING="${JSON_STRING},\"flash_tool\":\"${TOOL}\""
+		fi
+		if [ "$USB_BACKUP" != "" ];then
+			JSON_STRING="${JSON_STRING},\"backup\":\"${USB_BACKUP}\""
+		fi
+		if [ "$CMD_ARGS" != "" ];then
+			JSON_STRING="${JSON_STRING},\"cmd_args\":\"${CMD_ARGS}\""
+		fi
+		if [ "$MKFS_FLAG" != "" ];then
+			JSON_STRING="${JSON_STRING},\"mkfs\":\"${MKFS_FLAG}\""
+		fi
+		if [ "$REMOVE_AFTER" != "" ];then
+			JSON_STRING="${JSON_STRING},\"delete_after\":\"${REMOVE_AFTER}\""
+		fi
+		if [ "$BMAP_FILE" != "" ];then
+			JSON_STRING="${JSON_STRING},\"bmap_file\":\"${BMAP_FILE}\""
+		fi
+		OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/usb/flash/" --header 'Authorization: token '$AUTH_TOKEN'' --header 'Content-Type: application/json' --data-raw '{'$JSON_STRING'}' )
+		RESULT=$(echo $OUTPUT|jq -r .result)
+		if [ "$RESULT" == "success" ];then
+			JOB_ID=$(echo $OUTPUT|jq -r .data.job_id)
+			PROGRESS_URL=$(echo $OUTPUT|jq -r .data.progress_url)
+			echo "JOB-ID :       $JOB_ID"
+			echo "PROGRESS_URL : $PROGRESS_URL "
+		else
+			if [ "$RESULT" == "" ];then
+				echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
+				exit 1
+			fi
+			MESSAGE=$(echo $OUTPUT|jq -r .message)
+			FAILURE_MSG=$(echo $MESSAGE|grep -ow "No Device matches")
+			if [ "$FAILURE_MSG" ];then
+				echo "[ERROR] Device $DEVICE doesn't exsist"
+			else
+				echo $MESSAGE
+			fi
+			exit 1
+		fi
+	elif [ "$OPREATION" == "status" ] && [ "$USB_JOB_ID" != "" ];then
+		OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/usb/flash/status/$USB_JOB_ID" --header 'Authorization: token '$AUTH_TOKEN'' )
+		RESULT=$(echo $OUTPUT|jq -r .result)
+		JOB_STATUS=$(echo $OUTPUT|jq -r .data.status)
+		if [ "$RESULT" == "success" ];then
+			if [ "$JOB_STATUS" == "started" ] || [ "$JOB_STATUS" == "finished" ];then
+				PROGRESS=$(echo $OUTPUT|jq -r .data.info.progress)
+				CURRENT_STATUS=$(echo $OUTPUT|jq -r .data.info.current)
+				FLASHING_STATUS=$(echo $OUTPUT|jq -r .data.info.flash)
+				echo "Progress            :  $PROGRESS%"
+				echo "Current Status      :  $CURRENT_STATUS"
+				echo "Flashing Status     :  $FLASHING_STATUS"
+			elif [ "$JOB_STATUS" == "queued" ];then
+				echo "USB flash Job $USB_JOB_ID is in queue"
+				exit 0
+			else
+				echo "[ERROR] Couldn't access status of USB Job ID $USB_JOB_ID"
+				exit 1
+			fi
+		else
+			if [ "$RESULT" == "" ];then
+				echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
+				exit 1
+			fi
+			MESSAGE=$(echo $OUTPUT|jq -r .message)
+			FAILURE_MSG=$(echo $MESSAGE|grep -ow "No Device matches")
+			if [ "$FAILURE_MSG" ];then
+				echo "[ERROR] Device $DEVICE doesn't exsist"
+			else
+				echo $MESSAGE
+			fi
+			exit 1
+		fi
+	elif [ "$OPREATION" == "status" ] && [ "$USB_JOB_ID" == "" ];then
+		OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/usb/queue/" --header 'Authorization: token '$AUTH_TOKEN'' )
+		RESULT=$(echo $OUTPUT|jq -r .result)
+		SCHEDULED_JOB_ID=$(echo $OUTPUT|jq .data.queue_info.scheduled_jobs|jq 'keys[0]')
+		CURRENT_JOB_ID=$(echo $OUTPUT|jq .data.queue_info.current_jobs|jq 'keys[0]')
+		if [ "$RESULT" == "success" ];then
+			echo "Running USB Flash Job:"
+			if [ "$CURRENT_JOB_ID" != "null" ];then
+				echo " Job-ID   : $CURRENT_JOB_ID"
+			else
+				echo " Currently No USB Flash Job is running"
+			fi
+			echo ""
+			echo "USB Flash Jobs in Queue:"
+			if [ "$SCHEDULED_JOB_ID" != "null" ];then
+				while [ "$SCHEDULED_JOB_ID" != "null" ];
+				do
+					COUNT=`expr $COUNT + 1`
+					echo " Job-ID $COUNT : $SCHEDULED_JOB_ID"
+					SCHEDULED_JOB_ID=$(echo $OUTPUT|jq .data.queue_info.scheduled_jobs|jq keys["$COUNT"])
+				done
+			else
+				echo " Currently No USB Flash job is in Queue"
+			fi
+		else
+			if [ "$RESULT" == "" ];then
+				echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
+				exit 1
+			fi
+			MESSAGE=$(echo $OUTPUT|jq -r .message)
+			FAILURE_MSG=$(echo $MESSAGE|grep -ow "No Device matches")
+			if [ "$FAILURE_MSG" ];then
+				echo "[ERROR] Device $DEVICE doesn't exsist"
+			else
+				echo $MESSAGE
+			fi
+			exit 1
+		fi
+	elif [ "$OPREATION" == "remove" ] && [ "$USB_JOB_ID" != "" ];then
+		OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/usb/flashcancel/$USB_JOB_ID" --header 'Authorization: token '$AUTH_TOKEN'' )
+		RESULT=$(echo $OUTPUT|jq -r .result)
+		if [ "$RESULT" == "success" ];then
+			echo "Successfully canceled USB Flash Job : $USB_JOB_ID"
+			exit 0
+		else
+			if [ "$RESULT" == "" ];then
+				echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
+				exit 1
+			fi
+			MESSAGE=$(echo $OUTPUT|jq -r .message)
+			FAILURE_MSG=$(echo $MESSAGE|grep -ow "No Device matches")
+			if [ "$FAILURE_MSG" ];then
+				echo "[ERROR] Device $DEVICE doesn't exsist"
+			else
+				echo $MESSAGE
+			fi
+			exit 1
+		fi
+	else
+		if [ "$FILE_PATH" == "" ];then
+			echo "[ERROR] File doesn't exsist $FILE_PATH"
+			help_device_usb_flash
+			exit 1
+		fi
+		if [ "$PARTITION" == "" ];then
+			echo "[ERROR] Partition should not be empty"
+			help_device_usb_flash
+			exit 1
+		fi
+	fi
+}
+
+function list_fmanager_directory() {
+	user_authentication
+	DIR_PATH_OPTIONAL=$OPTION3
+	COUNT=0
+	OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/ebf/$DIR_PATH_OPTIONAL"  --header 'Authorization: token '$AUTH_TOKEN'')
+	RESULT=$(echo $OUTPUT|jq -r .result)
+	LIST_DATA=$(echo $OUTPUT|jq -r .data[$COUNT])
+	if [ "$RESULT" == "success" ] && [ "$LIST_DATA" != "null" ];then
+		while [ "$LIST_DATA" != "null" ];
+		do
+			FILE_OR_DIR_NAME=$(echo $LIST_DATA|jq -r .file_or_dir_name)
+			SIZE=$(echo $LIST_DATA|jq -r .size)
+			TYPE=$(echo $LIST_DATA|jq -r .type)
+			OWNER=$(echo $LIST_DATA|jq -r .owner)
+			DATE=$(echo $LIST_DATA|jq -r .modified_date)
+			COUNT=`expr $COUNT + 1`
+			LIST_DATA=$(echo $OUTPUT|jq -r .data[$COUNT])
+			printf "%-30s %-10s %-12s %-8s %-15s \n" "$FILE_OR_DIR_NAME" "$TYPE" "$OWNER" "$SIZE" "$DATE"
+		done
+	elif [ "$RESULT" == "success" ] && [ "$LIST_DATA" == "null" ];then
+		echo "Directory is Empty"
+		exit 1
+	else
+		if [ "$RESULT" == "" ];then
+			echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
+			exit 1
+		fi
+		MESSAGE=$(echo $OUTPUT|jq -r .message)
+		FAILURE_MSG=$(echo $MESSAGE|grep -ow "No Device matches")
+		if [ "$FAILURE_MSG" ];then
+			echo "[ERROR] Device $DEVICE doesn't exsist"
+		else
+			echo $MESSAGE
+		fi
+    exit 1
+	fi
+}
+
+function mkdir_fmanager_directory() {
+	user_authentication
+	DIR_PATH=$OPTION3
+	if [ `expr "$DIR_PATH" : ".*[A-Za-z0-9.()~!@$^&+={};-].*"` -gt 0 ]; then
+		OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/ebf/"  --header 'Authorization: token '$AUTH_TOKEN'' --header 'Content-Type: application/json' --data-raw '{"path":"'"$DIR_PATH"'"}' )
+	else
+    echo "[ERROR] Directory Name contains special characters"
+		exit 1
+	fi
+	RESULT=$(echo $OUTPUT|jq -r .result)
+	MESSAGE=$(echo $OUTPUT|jq -r .message)
+	if [ "$RESULT" == "success" ];then
+			echo "Successfully $MESSAGE"
+			exit 0
+	else
+		if [ "$RESULT" == "" ];then
+			echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
+			exit 1
+		fi
+		FAILURE_MSG=$(echo $MESSAGE|grep -ow "No Device matches")
+		if [ "$FAILURE_MSG" ];then
+			echo "[ERROR] Device $DEVICE doesn't exsist"
+		else
+			echo $MESSAGE
+		fi
+    exit 1
+	fi
+}
+
+function rm_fmanager_directory() {
+	user_authentication
+	DIR_PATH=$OPTION3
+	OUTPUT=$(curl -s -k --location --request DELETE "$SERVER_URL/api/v0.2/ebf/$USER_NAME/"  --header 'Authorization: token '$AUTH_TOKEN'' --header 'Content-Type: application/json' --data-raw '{"path":"'"$DIR_PATH"'"}' )
+	RESULT=$(echo $OUTPUT|jq -r .result)
+	MESSAGE=$(echo $OUTPUT|jq -r .message)
+	if [ "$RESULT" == "success" ];then
+			echo "Successfully $MESSAGE"
+			exit 0
+	else
+		if [ "$RESULT" == "" ];then
+			echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
+			exit 1
+		fi
+		FAILURE_MSG=$(echo $MESSAGE|grep -ow "No Device matches")
+		if [ "$FAILURE_MSG" ];then
+			echo "[ERROR] Device $DEVICE doesn't exsist"
+		else
+			echo $MESSAGE
+		fi
+    exit 1
+	fi
+}
+
+function upload_fmanager() {
+	user_authentication
+	SRC_FILE_PATH=$OPTION3
+	DST_FILE_PATH=$OPTION4
+	JSON_STRING=""
+	if [ -f $SRC_FILE_PATH ];then
+		JSON_STRING="--form file=@$SRC_FILE_PATH --form pathToUploadFile=$DST_FILE_PATH"
+		OUTPUT=$(curl -s -k --location --request PUT "$SERVER_URL/api/v0.2/ebf/$USER_NAME/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING )
+		RESULT=$(echo $OUTPUT|jq -r .result)
+		MESSAGE=$(echo $OUTPUT|jq -r .message)
+		if [ "$RESULT" == "success" ];then
+			echo "Successfully $MESSAGE"
+		else
+			if [ "$RESULT" == "" ];then
+				echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
+				exit 1
+			fi
+			FAILURE_MSG=$(echo $MESSAGE|grep -ow "No Device matches")
+			if [ "$FAILURE_MSG" ];then
+				echo "[ERROR] Device $DEVICE doesn't exsist"
+			else
+				echo $MESSAGE
+			fi
+			exit 1
+		fi
+	else
+		help_fmanager_upload
+		exit 1
+	fi
+}
+
+function download_fmanager() {
+	user_authentication
+  SRC_FILE_PATH=${OPTION3%/}
+	FILE_NAME=${SRC_FILE_PATH##*/}
+	DST_FILE_PATH=${OPTION4%/}
+	if [ ! -d "$DST_FILE_PATH" ] && [ "$DST_FILE_PATH" != "" ];then
+		PARENT_DST_FILE_PATH=${DST_FILE_PATH%/*}
+		if [ ! -d "$PARENT_DST_FILE_PATH" ];then
+		 echo "[ERROR] Destination download path is not Valid!"
+		 help_fmanager_download
+		 exit 1
+	  else
+			FILE_NAME=$DST_FILE_PATH
+		fi
+	elif [ -d "$DST_FILE_PATH" ];then
+		FILE_NAME="$DST_FILE_PATH/$FILE_NAME"
+	else
+		FILE_NAME=$FILE_NAME
+	fi
+  if [ "$SRC_FILE_PATH" != "" ];then
+    OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/ebf/$USER_NAME/download/$SRC_FILE_PATH/" --header 'Authorization: token '$AUTH_TOKEN'' --output $FILE_NAME )
+		if [ $? -eq 0 ];then
+			echo "Successfully Downloaded \"$SRC_FILE_PATH\" into \"$FILE_NAME\""
+		else
+			echo "[ERROR] Couldn't download \"$SRC_FILE_PATH\" , Check whether the file exsist or not"
+			help_fmanager_download
+			exit 1
+		fi
+  else
+		echo "[ERROR] Source FileName shouldn't be empty"
+		help_fmanager_download
+    exit 1
+  fi
+}
+
+
 OPTION=$1
 shift
 OPTION2=$1
@@ -2734,6 +3675,55 @@ case "$OPTION" in
         ;;
     esac
     ;;
+	fmanager)
+		case "$OPTION2" in
+			ls)
+				if [ "$OPTION4" == "" ] && [ "$OPTION3" != "help" ];then
+					list_fmanager_directory
+				else
+					help_fmanager_ls
+				fi
+				;;
+			mkdir)
+				if [ "$OPTION3" != "" ] && [ "$OPTION4" == "" ] && [ "$OPTION3" != "help" ];then
+					mkdir_fmanager_directory
+				else
+					help_fmanager_mkdir
+				fi
+				;;
+			rm)
+				if [ "$OPTION3" != "" ] && [ "$OPTION4" == "" ] && [ "$OPTION3" != "help" ];then
+					rm_fmanager_directory
+				else
+					help_fmanager_rm
+				fi
+				;;
+			upload)
+				if [ "$OPTION4" != "" ] && [ "$OPTION4" != "help" ] && [ "$OPTION5" == "" ];then
+					upload_fmanager
+				else
+					help_fmanager_upload
+				fi
+				;;
+			download)
+				if [ "$OPTION5" == "" ] && [ "$OPTION3" != "" ] && [ "$OPTION3" != "help" ];then
+					download_fmanager
+				else
+					help_fmanager_download
+				fi
+				;;
+			*)
+				help_fmanager
+				;;
+			esac
+			;;
+	version)
+		if [ "$OPTION2" == "" ] && [ "$OPTION2" != "help" ];then
+			echo "$VERSION"
+		else
+			help_version
+		fi
+		;;
   *)
     case "$OPTION2" in
       status)
@@ -2785,7 +3775,7 @@ case "$OPTION" in
             fi
             ;;
           *)
-            if [ "$OPTION3" != "" ];then
+            if [ "$OPTION3" != "" ] && [ "$OPTION3" != "help" ];then
               if [ "$OPTION4" == "" ];then
                 power_command $OPTION3
               else
@@ -2816,28 +3806,21 @@ case "$OPTION" in
       portfw)
         case "$OPTION3" in
           list)
-            OPTION4=$(echo $OPTION4 | tr 'A-Z' 'a-z')
-            if [ "$OPTION4" == "nat" ] || [ "$OPTION4" == "ssh" ];then
-              if [ "$OPTION5" == "" ];then
+            if [ "$OPTION4" == "" ];then
                 portfw_list
-              else
-                help_device_portfw_list
-              fi
             else
-              help_device_portfw_list
+                help_device_portfw_list
             fi
             ;;
           add)
-            OPTION4=$(echo $OPTION4 | tr 'a-z' 'A-Z')
-            if [ "$OPTION4" == "NAT" ] || [ "$OPTION4" == "SSH" ];then
+            if [ "$OPTION4" != "help" ];then
               portfw_add
             else
               help_device_portfw_add
             fi
             ;;
           remove)
-            OPTION4=$(echo $OPTION4 | tr 'A-Z' 'a-z')
-            if [ "$OPTION4" == "nat" ] || [ "$OPTION4" == "ssh" ];then
+            if [ "$OPTION4" != "help" ];then
               portfw_remove
 						else
               help_device_portfw_remove
@@ -2851,13 +3834,13 @@ case "$OPTION" in
       serial)
         case "$OPTION3" in
           run)
-            if [ "$OPTION5" == "" ];then
+            if [ "$OPTION5" == "" ] && [ "$OPTION4" != "help" ];then
 							execute_serial_command
             else
               help_device_serial_run
             fi
             ;;
-          download)
+					download)
 						if [ "$OPTION4" == "" ] || [ "$OPTION5" == "" ];then
 							help_device_serial_download
 						elif [ "$OPTION6" == "" ];then
@@ -2866,7 +3849,7 @@ case "$OPTION" in
 							help_device_serial_download
 						fi
 						;;
-          upload)
+					upload)
 						if [ "$OPTION4" == "" ] || [ "$OPTION5" == "" ];then
 							help_device_serial_upload
 						elif [ "$OPTION6" == "" ];then
@@ -2883,7 +3866,7 @@ case "$OPTION" in
 			ssh)
 				case "$OPTION3" in
 					run)
-						if [ "$OPTION5" == "" ];then
+						if [ "$OPTION5" == "" ] && [ "$OPTION4" != "help" ];then
 							execute_ssh_command
 						else
 							help_device_ssh_run
@@ -2905,6 +3888,13 @@ case "$OPTION" in
 							ssh_upload
 						else
 							help_device_ssh_upload
+						fi
+						;;
+					import-key)
+						if [ "$OPTION4" == "" ] || [ "$OPTION6" == "" ] || [ "$OPTION4" == "help" ];then
+							help_device_ssh_import_key
+						else
+							ssh_import_key
 						fi
 						;;
 					*)
@@ -3035,31 +4025,45 @@ case "$OPTION" in
 			netboot)
 				case "$OPTION3" in
 					ls)
-						if [ "$OPTION5" == "" ];then
+						if [ "$OPTION5" == "" ] && [ "$OPTION4" != "help" ];then
 							list_netboot_directory
 						else
 							help_device_netboot_ls
 						fi
 						;;
 					mkdir)
-						if [ "$OPTION4" != "" ] && [ "$OPTION5" == "" ];then
+						if [ "$OPTION4" != "" ] && [ "$OPTION5" == "" ] && [ "$OPTION4" != "help" ];then
 							mkdir_netboot_directory
 						else
 							help_device_netboot_mkdir
 						fi
 						;;
 					rm)
-						if [ "$OPTION4" != "" ] && [ "$OPTION5" == "" ];then
+						if [ "$OPTION4" != "" ] && [ "$OPTION5" == "" ] && [ "$OPTION4" != "help" ];then
 							delete_netboot_directory
 						else
 							help_device_netboot_rm
 						fi
 						;;
+					transfer)
+						netboot_transfer $@
+						;;
+					download)
+						if [ "$OPTION4" != "" ] && [ "$OPTION4" != "help" ];then
+							netboot_download
+						else
+							help_device_netboot_download
+						fi
+						;;
 					upload)
-						netboot_upload $@
+						if [ "$OPTION4" != "" ] && [ "$OPTION4" != "help" ];then
+							netboot_upload
+						else
+							help_device_netboot_upload
+						fi
 						;;
 					symlink)
-						if [ "$OPTION5" == "" ];then
+						if [ "$OPTION5" == "" ] && [ "$OPTION4" != "help" ];then
 							netboot_symlink
 						else
 							help_device_netboot_symlink
@@ -3088,7 +4092,7 @@ case "$OPTION" in
 						;;
 					switch)
 						if [ "$OPTION5" == "" ];then
-							if [ "$OPTION4" == "device" ] || [ "$OPTION4" == "zombie" ];then
+							if [ "$OPTION4" != "help" ] && [ "$OPTION4" == "device" ] || [ "$OPTION4" == "zombie" ] || [ "$OPTION4" == "side" ];then
 								sdcard_switch
 							else
 								help_device_sdcard_switch
@@ -3098,34 +4102,40 @@ case "$OPTION" in
 						fi
 						;;
 					ls)
-						if [ "$OPTION5" == "" ];then
+						if [ "$OPTION5" == "" ] && [ "$OPTION4" != "help" ];then
 							list_sdcard_directory
 						else
 							help_device_sdcard_ls
 						fi
 						;;
 					mkdir)
-						if [ "$OPTION4" != "" ] && [ "$OPTION5" == "" ];then
+						if [ "$OPTION4" != "" ] && [ "$OPTION5" == "" ] && [ "$OPTION4" != "help" ];then
 							mkdir_sdcard_directory
 						else
 							help_device_sdcard_mkdir
 						fi
 						;;
 					rm)
-						if [ "$OPTION4" != "" ] && [ "$OPTION5" == "" ];then
+						if [ "$OPTION4" != "" ] && [ "$OPTION5" == "" ] && [ "$OPTION4" != "help" ];then
 							delete_sdcard_directory
 						else
 							help_device_sdcard_rm
 						fi
 						;;
 					format)
+						if [ "$1" == "" ] || [ "$1" == "help" ];then
+							help_sdcard_format
+						fi
 						format_sdcard $@
 						;;
 					partition)
+						if [ "$1" == "" ] || [ "$1" == "help" ];then
+							help_sdcard_partition
+						fi
 						partition_sdcard $@
 						;;
 					backup)
-						if [ "$OPTION6" == "" ];then
+						if [ "$OPTION6" == "" ] && [ "$OPTION4" != "help" ] && [ "$OPTION5" != "help" ];then
 							sdcard_backup
 						else
 							help_device_sdcard_backup
@@ -3134,25 +4144,114 @@ case "$OPTION" in
 					flash)
 						sdcard_flash $@
 						;;
+					download)
+						if [ "$OPTION4" != "" ] && [ "$OPTION4" != "help" ];then
+							sdcard_download
+						else
+							help_device_sdcard_download
+						fi
+						;;
+					upload)
+						if [ "$OPTION4" != "" ] && [ "$OPTION4" != "help" ];then
+							sdcard_upload
+						else
+							help_device_sdcard_upload
+						fi
+						;;
 					*)
 						help_device_sdcard
 						;;
 					esac
 					;;
-			bfc)
+			usb)
 				case "$OPTION3" in
-					ls)
-						if [ "$OPTION5" == "" ];then
-							list_bfc_directory
+					info)
+						if [ "$OPTION4" == "" ];then
+							sdcard_info
 						else
-							help_device_bfc
+							help_device_usb
+						fi
+						;;
+					side)
+						if [ "$OPTION4" == "" ];then
+							sdcard_side
+						else
+							help_device_usb
+						fi
+						;;
+					switch)
+						if [ "$OPTION5" == "" ];then
+							if [ "$OPTION4" != "help" ] && [ "$OPTION4" == "device" ] || [ "$OPTION4" == "zombie" ] || [ "$OPTION4" == "side" ];then
+								sdcard_switch
+							else
+								help_device_usb_switch
+							fi
+						else
+							help_device_usb_switch
+						fi
+						;;
+					ls)
+						if [ "$OPTION5" == "" ] && [ "$OPTION4" != "help" ];then
+							list_sdcard_directory
+						else
+							help_device_usb_ls
+						fi
+						;;
+					mkdir)
+						if [ "$OPTION4" != "" ] && [ "$OPTION5" == "" ] && [ "$OPTION4" != "help" ];then
+							mkdir_sdcard_directory
+						else
+							help_device_usb_mkdir
+						fi
+						;;
+					rm)
+						if [ "$OPTION4" != "" ] && [ "$OPTION5" == "" ] && [ "$OPTION4" != "help" ];then
+							delete_sdcard_directory
+						else
+							help_device_usb_rm
+						fi
+						;;
+					format)
+						if [ "$1" == "" ] || [ "$1" == "help" ];then
+							help_usb_format
+						fi
+						format_sdcard $@
+						;;
+					partition)
+						if [ "$1" == "" ] || [ "$1" == "help" ];then
+							help_usb_partition
+						fi
+						partition_sdcard $@
+						;;
+					backup)
+						if [ "$OPTION6" == "" ] && [ "$OPTION4" != "help" ] && [ "$OPTION5" != "help" ];then
+							sdcard_backup
+						else
+							help_device_usb_backup
+						fi
+						;;
+					flash)
+						usb_flash $@
+						;;
+					download)
+						if [ "$OPTION4" != "" ] && [ "$OPTION4" != "help" ];then
+							sdcard_download
+						else
+							help_device_usb_download
+						fi
+						;;
+					upload)
+						if [ "$OPTION4" != "" ] && [ "$OPTION4" != "help" ];then
+							sdcard_upload
+						else
+							help_device_usb_upload
 						fi
 						;;
 					*)
-						help_device_bfc
+						help_device_usb
 						;;
-					esac
-					;;
+				esac
+				;;
       *)
 				if [ "$OPTION" == "" ] || [ "$OPTION" == "help" ];then
         	help
