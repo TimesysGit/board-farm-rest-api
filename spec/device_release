@@ -1,0 +1,30 @@
+openapi: 3.0.0
+info:
+  title: Generated for EBF-TAS
+  version: '0.2'
+servers:
+  - url: https://bfc.timesys.com
+components:
+  securitySchemes:
+    tokenAuth:
+      type: http
+      scheme: token
+security:
+  - tokenAuth: []
+paths:
+  /api/v0.2/devices/raspi4_gpio/release/force/:
+    get:
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                  message:
+                    type: string                    
+                required:
+                  - result

@@ -16,6 +16,9 @@ Individual APIs in this standard are described using files in openapi
 format in this directory.
  * [Device List](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/device_list)
  * [Device Info](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/device_info)
+ * [Device Allocate](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/device_allocate)
+ * [Device Release](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/device_release)
+ * [Device Release(force)](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/device_release_force)
  * [Power On](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/power_on)
 
 In general, an API is called by making a request of a server and receiving
