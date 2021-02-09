@@ -1,5 +1,4 @@
 #!/bin/bash
-
 AUTH_TOKEN=""
 OPTION=""
 OPTION2=""
@@ -8,7 +7,7 @@ DEVICE_LIST=()
 MY_DEVICE_LIST=()
 USER_NAME=""
 GPIO_PIN_DATA=""
-VERSION="1.0.1"
+VERSION="1.0.2"
 
 function check_dependencies() {
 	packageList="jq curl sshpass"
@@ -110,6 +109,7 @@ function help_device() {
 	echo "   netboot          Upload, Download images and other operations for network boot Image management"
 	echo "   sdcard           Partition, Format and other operations related to SDCard management."
 	echo "   usb              Partition, Format and other operations related to USB management."
+	echo "   uboot            For flashing u-bbot ino a device using serial connection through Xmodem/Ymodem/Zmodem"
   echo ""
   echo "Run 'ebf  <device name> [OPTION] help' for more information of a option."
   echo " "
@@ -978,6 +978,18 @@ function help_fmanager_download() {
 	exit 1
 }
 
+function help_device_uboot_flash() {
+	echo " "
+	echo "Usage:   ebf <device name> uboot flash -f <uboot file path> -p<xmodem/ymodem/zmodem>"
+	echo ""
+	echo "Description:"
+	echo "     For flashing u-bbot ino a device using serial connection through Xmodem/Ymodem/Zmodem"
+	echo ""
+	echo "Usage Example:"
+	echo "         ebf bbb01 uboot flash -f /tmp/uboot.bin -p ymodem"
+	exit 1
+}
+
 function execute_api() {
   METHOD=$1
   SERVER_URL="$2/api/v0.2/token/"
@@ -1016,13 +1028,13 @@ function user_authentication() {
         read -s -p "Provide the EBF User Password >> " PASSWORD
 				echo ""
       else
-        read -r -p "Provide the EBF UserName >> " USER_NAME
+        read -r -p "Provide the EBF User Name >> " USER_NAME
         read -s -p "Provide the EBF User Password >> " PASSWORD
 				echo ""
       fi
     else
       read -r -p "Provide the EBF Server URL >> " SERVER_URL
-      read -r -p "Provide the EBF UserName >> " USER_NAME
+      read -r -p "Provide the EBF User Name >> " USER_NAME
       read -s -p "Provide the EBF User Password >> " PASSWORD
 			echo ""
     fi
@@ -1035,7 +1047,7 @@ function user_authentication() {
         	echo "token:$AUTH_TOKEN" > ~/.ebfconfig
         	echo "username:$USER_NAME" >> ~/.ebfconfig
         	echo "server:$SERVER_URL" >> ~/.ebfconfig
-        	echo "Successfully logged in for user $USER_NAME"
+        	echo "Successfully logged in as user $USER_NAME"
       	else
         	echo "[ERROR] Invalid EBF-Server URL or Credentials"
         	exit 1
@@ -3614,6 +3626,60 @@ function download_fmanager() {
   fi
 }
 
+function uboot_flash(){
+	user_authentication
+	DEVICE=$OPTION
+	SRC_FILE_PATH=""
+	PROTOCOL=""
+	JSON_STRING=""
+	while [ "$1" != "" ];
+	do
+		 case $1 in
+			-p | --protocol )
+					PROTOCOL=$2
+					if [ "$PROTOCOL" != "xmodem" ] && [ "$PROTOCOL" != "ymodem" ] && [ "$PROTOCOL" != "zmodem" ];then
+						help_device_uboot_flash
+						exit 1
+					fi
+					shift
+					;;
+			-f | --file )
+					SRC_FILE_PATH=$2
+					shift
+					;;
+			*)
+				 help_device_uboot_flash
+				 exit 1
+				 ;;
+			esac
+			shift
+	done
+
+	if [ -f $SRC_FILE_PATH ] && [ "$SRC_FILE_PATH" != "" ];then
+		JSON_STRING="--form file=@$SRC_FILE_PATH --form serial_recv_cmd=\"loady\" --form protocol=\"$PROTOCOL\""
+		OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/upload/serial/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING )
+		RESULT=$(echo $OUTPUT|jq -r .result)
+		MESSAGE=$(echo $OUTPUT|jq -r .message)
+		if [ "$RESULT" == "success" ];then
+			echo "Successfully $MESSAGE"
+		else
+			if [ "$RESULT" == "" ];then
+				echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
+				exit 1
+			fi
+			FAILURE_MSG=$(echo $MESSAGE|grep -ow "No Device matches")
+			if [ "$FAILURE_MSG" ];then
+				echo "[ERROR] Device $DEVICE doesn't exsist"
+			else
+				echo $MESSAGE
+			fi
+			exit 1
+		fi
+	else
+		help_device_uboot_flash
+		exit 1
+	fi
+}
 
 OPTION=$1
 shift
@@ -3621,7 +3687,7 @@ OPTION2=$1
 shift
 OPTION3=$1
 shift
-if [ "$OPTION3" != "format" ] && [ "$OPTION3" != "partition" ];then
+if [ "$OPTION3" != "format" ] && [ "$OPTION3" != "partition" ] && [ "$OPTION2" != "uboot" ];then
 	OPTION4="$1"
 	shift
 	if [ "$OPTION4" != "local" ] && [ "$OPTION4" != "server" ];then
@@ -4252,6 +4318,16 @@ case "$OPTION" in
 						;;
 				esac
 				;;
+			uboot)
+				case "$OPTION3" in
+					flash)
+						uboot_flash $@
+						;;
+					*)
+						help_device_uboot_flash
+						;;
+					esac
+					;;
       *)
 				if [ "$OPTION" == "" ] || [ "$OPTION" == "help" ];then
         	help
