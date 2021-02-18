@@ -1,0 +1,50 @@
+openapi: 3.0.1
+info:
+  title: Generated for EBF-TAS
+  version: '0.2'
+servers:
+- url: https://bfc.timesys.com
+components:
+  securitySchemes:
+    tokenAuth:
+      type: http
+      scheme: token
+security:
+- tokenAuth: []
+paths:
+  /api/{version}/devices/{hostname}/webcam/restartfeed/:
+    post:
+      tags:
+      - api
+      operationId: api_devices_webcam_webcam_restartfeed
+      parameters:
+      - name: hostname
+        in: path
+        description: A unique value identifying this device.
+        required: true
+        schema:
+          type: string
+      - name: version
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
+      responses:
+        201:
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  msg:
+                    type: string
+      x-codegen-request-body-name: data
