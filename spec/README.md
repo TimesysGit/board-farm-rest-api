@@ -13,13 +13,19 @@ are modeled on the Django REST API framework which is described at
 https://www.django-rest-framework.org/
 
 Individual APIs in this standard are described using files in openapi
-format in this directory.
- * [Device List](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/device_list)
- * [Device Info](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/device_info)
- * [Device Allocate](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/device_allocate)
- * [Device Release](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/device_release)
- * [Device Release(force)](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/device_release_force)
- * [Power On](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/power_on)
+format under below directories.
+ * [Device Management](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/device_management)
+ * [Power](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/power)
+ * [Hotplugs](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/hotplug)
+ * [Serial Execute and File Transfers](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/serial)
+ * [SSH Execute and File Transfers](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/ssh)
+ * [Network Boot Image Management](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/netboot)
+ * [SDCard Image Management](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/sdcard)
+ * [USB Image Management](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/sub)
+ * [Device Port Forwarding](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/portfw)
+ * [Lab Controllers](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/labcontrollers)
+ * [USB webcam Controls](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/usb_webcam)
+ * [Authentication Token](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/auth_token)
 
 In general, an API is called by making a request of a server and receiving
 a response.  Usually, the materials for the request are passed in JSON format,

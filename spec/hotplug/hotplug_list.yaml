@@ -1,0 +1,52 @@
+openapi: 3.0.1
+info:
+  title: Generated for EBF-TAS
+  version: '0.2'
+servers:
+- url: https://bfc.timesys.com
+components:
+  securitySchemes:
+    tokenAuth:
+      type: http
+      scheme: token
+security:
+- tokenAuth: []
+paths:
+  /api/{version}/devices/{hostname}/hotplugs/:
+    get:
+      tags:
+      - api
+      operationId: api_devices_hotplugs
+      parameters:
+      - name: hostname
+        in: path
+        description: A unique value identifying this device.
+        required: true
+        schema:
+          type: string
+      - name: version
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: ""
+          content: 
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      hotplug-1:
+                        type: string
+                      hotplug-2:
+                        type: string
+                      hotplug-3:
+                        type: string
+                      hotplug-4:
+                        type: string
