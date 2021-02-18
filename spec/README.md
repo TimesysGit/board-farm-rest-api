@@ -21,7 +21,7 @@ format under below directories.
  * [SSH Execute and File Transfers](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/ssh)
  * [Network Boot Image Management](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/netboot)
  * [SDCard Image Management](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/sdcard)
- * [USB Image Management](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/sub)
+ * [USB Image Management](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/usb)
  * [Device Port Forwarding](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/portfw)
  * [Lab Controllers](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/labcontrollers)
  * [USB webcam Controls](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/usb_webcam)
