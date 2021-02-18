@@ -1,0 +1,57 @@
+openapi: 3.0.1
+info:
+  title: Generated for EBF-TAS
+  version: '0.2'
+servers:
+- url: https://bfc.timesys.com
+components:
+  securitySchemes:
+    tokenAuth:
+      type: http
+      scheme: token
+security:
+- tokenAuth: []
+paths:
+  /api/{version}/devices/{hostname}/netboot/fmanager/download/*{path}/:
+    get:
+      tags:
+      - api
+      operationId: api_devices_netboot_fmanager_netboot_fmanager_download
+      parameters:
+      - name: hostname
+        in: path
+        description: A unique value identifying this device.
+        required: true
+        schema:
+          type: string
+      - name: path
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: version
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                  data:   
+                    type: object
+                    properties:
+                      file_chunk:
+                        type: string
+                      chunk_size:
+                        type: integer
+                      end_of_file:
+                        type: boolean
+                      file_size:
+                        type: integer

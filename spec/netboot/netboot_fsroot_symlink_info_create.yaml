@@ -1,0 +1,85 @@
+openapi: 3.0.1
+info:
+  title: Generated for EBF-TAS
+  version: '0.2'
+servers:
+- url: https://bfc.timesys.com
+components:
+  securitySchemes:
+    tokenAuth:
+      type: http
+      scheme: token
+security:
+- tokenAuth: []
+paths:
+  /api/{version}/devices/{hostname}/netboot/fsroot/symlink/:
+    get:
+      tags:
+      - api
+      operationId: api_devices_netboot_fsroot_symlink_read
+      parameters:
+      - name: hostname
+        in: path
+        description: A unique value identifying this device.
+        required: true
+        schema:
+          type: string
+      - name: version
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                  data:
+                    type: string        
+    post:
+        tags:
+        - api
+        operationId: api_devices_netboot_fsroot_symlink_create
+        parameters:
+        - name: hostname
+          in: path
+          description: A unique value identifying this device.
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+        requestBody:
+          content:
+            application/json:
+              schema:
+                required:
+                - symlink_dir
+                type: object
+                properties:
+                  symlink_dir:
+                    title: Symlink dir
+                    minLength: 1
+                    type: string
+                  device_port:
+                    type: string
+          required: true
+        responses:
+          201:
+            description: ""
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    result:
+                      type: string
+        x-codegen-request-body-name: data
