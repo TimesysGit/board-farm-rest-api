@@ -12,7 +12,7 @@ components:
 security:
 - tokenAuth: []
 paths:
-  /api/0.2/devices/{DeviceName}/netboot/transfercancel/*{jobid}/:
+  /api/v0.2/devices/{DeviceName}/netboot/transfercancel/*{jobid}/:
     get:
       tags:
       - api

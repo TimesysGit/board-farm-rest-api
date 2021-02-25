@@ -12,7 +12,7 @@ components:
 security:
 - tokenAuth: []
 paths:
-  /api/0.2/devices/{DeviceName}/portfw/nat/:
+  /api/v0.2/devices/{DeviceName}/portfw/nat/:
     get:
       tags:
       - api

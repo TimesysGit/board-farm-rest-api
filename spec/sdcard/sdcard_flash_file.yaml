@@ -12,7 +12,7 @@ components:
 security:
 - tokenAuth: []
 paths:
-  /api/0.2/devices/{DeviceName}/sdcard/flash/:
+  /api/v0.2/devices/{DeviceName}/sdcard/flash/:
     post:
       tags:
       - api

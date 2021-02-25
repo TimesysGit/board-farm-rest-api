@@ -12,7 +12,7 @@ components:
 security:
 - tokenAuth: []
 paths:
-  /api/0.2/devices/{DeviceName}/power/reboot/:
+  /api/v0.2/devices/{DeviceName}/power/reboot/:
     put:
       tags:
       - api

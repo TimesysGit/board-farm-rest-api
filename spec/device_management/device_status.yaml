@@ -12,7 +12,7 @@ components:
 security:
 - tokenAuth: []
 paths:
-  /api/0.2/devices/{DeviceName}/status/:
+  /api/v0.2/devices/{DeviceName}/status/:
     get:
       tags:
       - api
