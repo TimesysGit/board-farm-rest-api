@@ -12,24 +12,19 @@ components:
 security:
 - tokenAuth: []
 paths:
-  /api/{version}/devices/{hostname}/netboot/fmanager/dir/*{path}/:
+  /api/0.2/devices/{DeviceName}/netboot/fmanager/dir/*{path}/:
     get:
       tags:
       - api
       operationId: api_devices_netboot_fmanager_dir_read
       parameters:
-      - name: hostname
+      - name: DeviceName
         in: path
         description: A unique value identifying this device.
         required: true
         schema:
           type: string
       - name: path
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: version
         in: path
         required: true
         schema:
@@ -52,18 +47,13 @@ paths:
       - api
       operationId: api_devices_netboot_fmanager_dir_update
       parameters:
-      - name: hostname
+      - name: DeviceName
         in: path
         description: A unique value identifying this device.
         required: true
         schema:
           type: string
       - name: path
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: version
         in: path
         required: true
         schema:
@@ -99,18 +89,13 @@ paths:
       - api
       operationId: api_devices_netboot_fmanager_dir_create
       parameters:
-      - name: hostname
+      - name: DeviceName
         in: path
         description: A unique value identifying this device.
         required: true
         schema:
           type: string
       - name: path
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: version
         in: path
         required: true
         schema:
@@ -146,18 +131,13 @@ paths:
       - api
       operationId: api_devices_netboot_fmanager_dir_delete
       parameters:
-      - name: hostname
+      - name: DeviceName
         in: path
         description: A unique value identifying this device.
         required: true
         schema:
           type: string
       - name: path
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: version
         in: path
         required: true
         schema:

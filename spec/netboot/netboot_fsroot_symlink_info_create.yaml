@@ -12,20 +12,15 @@ components:
 security:
 - tokenAuth: []
 paths:
-  /api/{version}/devices/{hostname}/netboot/fsroot/symlink/:
+  /api/0.2/devices/{DeviceName}/netboot/fsroot/symlink/:
     get:
       tags:
       - api
       operationId: api_devices_netboot_fsroot_symlink_read
       parameters:
-      - name: hostname
+      - name: DeviceName
         in: path
         description: A unique value identifying this device.
-        required: true
-        schema:
-          type: string
-      - name: version
-        in: path
         required: true
         schema:
           type: string
@@ -46,14 +41,9 @@ paths:
         - api
         operationId: api_devices_netboot_fsroot_symlink_create
         parameters:
-        - name: hostname
+        - name: DeviceName
           in: path
           description: A unique value identifying this device.
-          required: true
-          schema:
-            type: string
-        - name: version
-          in: path
           required: true
           schema:
             type: string
