@@ -27,6 +27,8 @@ format under below directories.
  * [USB webcam Controls](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/usb_webcam)
  * [Authentication Token](https://github.com/TimesysGit/board-farm-rest-api/blob/main/spec/auth_token)
 
+These specs are generated using [DRF - Yet another Swagger generator 2](https://github.com/JoelLefkowitz/drf-yasg) python package.
+
 In general, an API is called by making a request of a server and receiving
 a response.  Usually, the materials for the request are passed in JSON format,
 and the response is transmitted back to the requesting client also in
