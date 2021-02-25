@@ -12,20 +12,15 @@ components:
 security:
 - tokenAuth: []
 paths:
-  /api/{version}/devices/{hostname}/upload/serial/:
+  /api/v0.2/devices/{DeviceName}/upload/serial/:
     post:
       tags:
       - api
       operationId: api_devices_upload_device_upload_serial
       parameters:
-      - name: hostname
+      - name: DeviceName
         in: path
         description: A unique value identifying this device.
-        required: true
-        schema:
-          type: string
-      - name: version
-        in: path
         required: true
         schema:
           type: string

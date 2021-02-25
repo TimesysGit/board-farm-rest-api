@@ -12,20 +12,15 @@ components:
 security:
 - tokenAuth: []
 paths:
-  /api/{version}/devices/{hostname}/portfw/nat/:
+  /api/v0.2/devices/{DeviceName}/portfw/nat/:
     get:
       tags:
       - api
       operationId: api_devices_portfw_nat_read
       parameters:
-      - name: hostname
+      - name: DeviceName
         in: path
         description: A unique value identifying this device.
-        required: true
-        schema:
-          type: string
-      - name: version
-        in: path
         required: true
         schema:
           type: string
@@ -61,14 +56,9 @@ paths:
       - api
       operationId: api_devices_portfw_nat_update
       parameters:
-      - name: hostname
+      - name: DeviceName
         in: path
         description: A unique value identifying this device.
-        required: true
-        schema:
-          type: string
-      - name: version
-        in: path
         required: true
         schema:
           type: string
@@ -116,14 +106,9 @@ paths:
       - api
       operationId: api_devices_portfw_nat_create
       parameters:
-      - name: hostname
+      - name: DeviceName
         in: path
         description: A unique value identifying this device.
-        required: true
-        schema:
-          type: string
-      - name: version
-        in: path
         required: true
         schema:
           type: string
@@ -171,14 +156,9 @@ paths:
       - api
       operationId: api_devices_portfw_nat_delete
       parameters:
-      - name: hostname
+      - name: DeviceName
         in: path
         description: A unique value identifying this device.
-        required: true
-        schema:
-          type: string
-      - name: version
-        in: path
         required: true
         schema:
           type: string

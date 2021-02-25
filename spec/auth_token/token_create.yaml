@@ -12,17 +12,11 @@ components:
 security:
 - tokenAuth: []
 paths:
-  /api/{version}/token/:
+  /api/v0.2/token/:
     post:
       tags:
       - api
       operationId: api_token_create
-      parameters:
-      - name: version
-        in: path
-        required: true
-        schema:
-          type: string
       responses:
         200:
           description: ""

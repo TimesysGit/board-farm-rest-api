@@ -12,8 +12,18 @@ components:
 security:
   - tokenAuth: []
 paths:
-  /api/v0.2/devices/raspi4_gpio/assign/:
+  /api/v0.2/devices/{DeviceName}/assign/:
     get:
+      tags:
+      - api
+      operationId: api_devices_allocate
+      parameters:
+      - name: DeviceName
+        in: path
+        description: A unique value identifying this device.
+        required: true
+        schema:
+          type: string
       responses:
         200:
           description: ''

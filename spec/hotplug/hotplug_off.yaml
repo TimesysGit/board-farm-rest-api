@@ -12,24 +12,19 @@ components:
 security:
 - tokenAuth: []
 paths:
-  /api/{version}/devices/{hostname}/hotplug/{hotplug_num}/off/:
+  /api/v0.2/devices/{DeviceName}/hotplug/{hotplug_num}/off/:
     put:
       tags:
       - api
       operationId: api_devices_hotplug_hotplug_off
       parameters:
-      - name: hostname
+      - name: DeviceName
         in: path
         description: A unique value identifying this device.
         required: true
         schema:
           type: string
       - name: hotplug_num
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: version
         in: path
         required: true
         schema:

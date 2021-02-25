@@ -12,24 +12,19 @@ components:
 security:
 - tokenAuth: []
 paths:
-  /api/{version}/devices/{hostname}/usb/flashcancel/*{jobid}/:
+  /api/v0.2/devices/{DeviceName}/usb/flashcancel/*{jobid}/:
     get:
       tags:
       - api
       operationId: api_devices_usb_usb_flash_cancel
       parameters:
-      - name: hostname
+      - name: DeviceName
         in: path
         description: A unique value identifying this device.
         required: true
         schema:
           type: string
       - name: jobid
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: version
         in: path
         required: true
         schema:

@@ -12,20 +12,15 @@ components:
 security:
 - tokenAuth: []
 paths:
-  /api/{version}/devices/{hostname}/usb/flash/:
+  /api/v0.2/devices/{DeviceName}/usb/flash/:
     post:
       tags:
       - api
       operationId: api_devices_usb_usb_image_transfer
       parameters:
-      - name: hostname
+      - name: DeviceName
         in: path
         description: A unique value identifying this device.
-        required: true
-        schema:
-          type: string
-      - name: version
-        in: path
         required: true
         schema:
           type: string
