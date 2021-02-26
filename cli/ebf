@@ -2045,7 +2045,7 @@ function delete_netboot_directory() {
 function netboot_transfer() {
 	user_authentication
 	DEVICE=$OPTION
-	OPREATION=$OPTION4
+	OPERATION=$OPTION4
 	NETBOOT_JOB_ID=$OPTION5
 	FILE_PATH=""
 	TOOL=""
@@ -2091,13 +2091,13 @@ function netboot_transfer() {
 	  esac
 	  shift
 	done
-	if [ "$OPREATION" != "local" ] && [ "$OPREATION" != "server" ] && [ "$OPREATION" != "status" ];then
+	if [ "$OPERATION" != "local" ] && [ "$OPERATION" != "server" ] && [ "$OPERATION" != "status" ];then
 		echo ""
 		echo "[ERROR] Please provide the file location whether it is present in local or server"
 		help_device_netboot_transfer
 		exit 1
 	fi
-	if [ "$FILE_PATH" != "" ] && [ -f $FILE_PATH ] && [ "$OPREATION" == "local" ];then
+	if [ "$FILE_PATH" != "" ] && [ -f $FILE_PATH ] && [ "$OPERATION" == "local" ];then
 		if [ "$JSON_STRING" == "" ];then
 			 JSON_STRING="--form file=@$FILE_PATH"
 		fi
@@ -2182,7 +2182,7 @@ function netboot_transfer() {
 			fi
 			exit 1
 		fi
-	elif [ "$OPREATION" == "status" ] && [ "$NETBOOT_JOB_ID" != "" ];then
+	elif [ "$OPERATION" == "status" ] && [ "$NETBOOT_JOB_ID" != "" ];then
 		OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/transfer/file/status/$NETBOOT_JOB_ID" --header 'Authorization: token '$AUTH_TOKEN'' )
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		JOB_STATUS=$(echo $OUTPUT|jq -r .data.status)
@@ -2215,7 +2215,7 @@ function netboot_transfer() {
 			fi
 			exit 1
 		fi
-	elif [ "$OPREATION" == "status" ] && [ "$NETBOOT_JOB_ID" == "" ];then
+	elif [ "$OPERATION" == "status" ] && [ "$NETBOOT_JOB_ID" == "" ];then
 		OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/queue/" --header 'Authorization: token '$AUTH_TOKEN'' )
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		SCHEDULED_JOB_ID=$(echo $OUTPUT|jq .data.queue_info.scheduled_jobs|jq 'keys[0]')
@@ -2253,7 +2253,7 @@ function netboot_transfer() {
 			fi
 			exit 1
 		fi
-	elif [ "$OPREATION" == "remove" ] && [ "$NETBOOT_JOB_ID" != "" ];then
+	elif [ "$OPERATION" == "remove" ] && [ "$NETBOOT_JOB_ID" != "" ];then
 		OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/transfercancel/$NETBOOT_JOB_ID" --header 'Authorization: token '$AUTH_TOKEN'' )
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		if [ "$RESULT" == "success" ];then
@@ -2732,10 +2732,10 @@ function partition_sdcard() {
 function sdcard_backup() {
 	user_authentication
 	DEVICE=$OPTION
-	OPREATION=$OPTION4
+	OPERATION=$OPTION4
 	BACKUP_JOB_ID=$OPTION5
 	COUNT=0
-	if [ "$OPREATION" == "" ] && [ "$BACKUP_JOB_ID" == "" ];then
+	if [ "$OPERATION" == "" ] && [ "$BACKUP_JOB_ID" == "" ];then
 		OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/backup/" --header 'Authorization: token '$AUTH_TOKEN'' )
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		if [ "$RESULT" == "success" ];then
@@ -2757,7 +2757,7 @@ function sdcard_backup() {
 			fi
 			exit 1
 		fi
-	elif [ "$OPREATION" == "status" ] && [ "$BACKUP_JOB_ID" != "" ];then
+	elif [ "$OPERATION" == "status" ] && [ "$BACKUP_JOB_ID" != "" ];then
 		OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/backup/status/$BACKUP_JOB_ID" --header 'Authorization: token '$AUTH_TOKEN'' )
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		JOB_STATUS=$(echo $OUTPUT|jq -r .data.status)
@@ -2790,7 +2790,7 @@ function sdcard_backup() {
 			fi
 			exit 1
 		fi
-	elif [ "$OPREATION" == "status" ] && [ "$BACKUP_JOB_ID" == "" ];then
+	elif [ "$OPERATION" == "status" ] && [ "$BACKUP_JOB_ID" == "" ];then
 		OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/backupqueue/" --header 'Authorization: token '$AUTH_TOKEN'' )
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		SCHEDULED_JOB_ID=$(echo $OUTPUT|jq .data.queue_info.scheduled_jobs|jq 'keys[0]')
@@ -2829,7 +2829,7 @@ function sdcard_backup() {
 			fi
 			exit 1
 		fi
-	elif [ "$OPREATION" == "remove" ] && [ "$BACKUP_JOB_ID" != "" ];then
+	elif [ "$OPERATION" == "remove" ] && [ "$BACKUP_JOB_ID" != "" ];then
 		OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/backupcancel/$BACKUP_JOB_ID" --header 'Authorization: token '$AUTH_TOKEN'' )
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		if [ "$RESULT" == "success" ];then
@@ -2861,7 +2861,7 @@ function sdcard_backup() {
 function sdcard_flash() {
 	user_authentication
 	DEVICE=$OPTION
-	OPREATION=$OPTION4
+	OPERATION=$OPTION4
 	SDCARD_JOB_ID=$OPTION5
 	JSON_STRING=""
 	PARTITION=""
@@ -2930,7 +2930,7 @@ function sdcard_flash() {
 		esac
 		shift
 	done
-	if [ "$FILE_PATH" != "" ] && [ -f $FILE_PATH ] && [ "$OPREATION" == "local" ] && [ "$PARTITION" != "" ];then
+	if [ "$FILE_PATH" != "" ] && [ -f $FILE_PATH ] && [ "$OPERATION" == "local" ] && [ "$PARTITION" != "" ];then
 		if [ "$JSON_STRING" == "" ];then
 			 JSON_STRING="--form file=@$FILE_PATH"
 		fi
@@ -2976,7 +2976,7 @@ function sdcard_flash() {
 			fi
 			exit 1
 		fi
-	elif [ "$FILE_PATH" != "" ] && [ "$OPREATION" == "server" ] && [ "$PARTITION" != "" ];then
+	elif [ "$FILE_PATH" != "" ] && [ "$OPERATION" == "server" ] && [ "$PARTITION" != "" ];then
 		if [ "$JSON_STRING" == "" ];then
 			 JSON_STRING="\"file\":\"$FILE_PATH\""
 		fi
@@ -3022,7 +3022,7 @@ function sdcard_flash() {
 			fi
 			exit 1
 		fi
-	elif [ "$OPREATION" == "status" ] && [ "$SDCARD_JOB_ID" != "" ];then
+	elif [ "$OPERATION" == "status" ] && [ "$SDCARD_JOB_ID" != "" ];then
 		OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/flash/status/$SDCARD_JOB_ID" --header 'Authorization: token '$AUTH_TOKEN'' )
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		JOB_STATUS=$(echo $OUTPUT|jq -r .data.status)
@@ -3055,7 +3055,7 @@ function sdcard_flash() {
 			fi
 			exit 1
 		fi
-	elif [ "$OPREATION" == "status" ] && [ "$SDCARD_JOB_ID" == "" ];then
+	elif [ "$OPERATION" == "status" ] && [ "$SDCARD_JOB_ID" == "" ];then
 		OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/queue/" --header 'Authorization: token '$AUTH_TOKEN'' )
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		SCHEDULED_JOB_ID=$(echo $OUTPUT|jq .data.queue_info.scheduled_jobs|jq 'keys[0]')
@@ -3093,7 +3093,7 @@ function sdcard_flash() {
 			fi
 			exit 1
 		fi
-	elif [ "$OPREATION" == "remove" ] && [ "$SDCARD_JOB_ID" != "" ];then
+	elif [ "$OPERATION" == "remove" ] && [ "$SDCARD_JOB_ID" != "" ];then
 		OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/flashcancel/$SDCARD_JOB_ID" --header 'Authorization: token '$AUTH_TOKEN'' )
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		if [ "$RESULT" == "success" ];then
@@ -3203,7 +3203,7 @@ function sdcard_upload() {
 function usb_flash() {
 	user_authentication
 	DEVICE=$OPTION
-	OPREATION=$OPTION4
+	OPERATION=$OPTION4
 	USB_JOB_ID=$OPTION5
 	JSON_STRING=""
 	PARTITION=""
@@ -3272,7 +3272,7 @@ function usb_flash() {
 		esac
 		shift
 	done
-	if [ "$FILE_PATH" != "" ] && [ -f $FILE_PATH ] && [ "$OPREATION" == "local" ] && [ "$PARTITION" != "" ];then
+	if [ "$FILE_PATH" != "" ] && [ -f $FILE_PATH ] && [ "$OPERATION" == "local" ] && [ "$PARTITION" != "" ];then
 		if [ "$JSON_STRING" == "" ];then
 			 JSON_STRING="--form file=@$FILE_PATH"
 		fi
@@ -3318,7 +3318,7 @@ function usb_flash() {
 			fi
 			exit 1
 		fi
-	elif [ "$FILE_PATH" != "" ] && [ "$OPREATION" == "server" ] && [ "$PARTITION" != "" ];then
+	elif [ "$FILE_PATH" != "" ] && [ "$OPERATION" == "server" ] && [ "$PARTITION" != "" ];then
 		if [ "$JSON_STRING" == "" ];then
 			 JSON_STRING="\"file\":\"$FILE_PATH\""
 		fi
@@ -3364,7 +3364,7 @@ function usb_flash() {
 			fi
 			exit 1
 		fi
-	elif [ "$OPREATION" == "status" ] && [ "$USB_JOB_ID" != "" ];then
+	elif [ "$OPERATION" == "status" ] && [ "$USB_JOB_ID" != "" ];then
 		OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/usb/flash/status/$USB_JOB_ID" --header 'Authorization: token '$AUTH_TOKEN'' )
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		JOB_STATUS=$(echo $OUTPUT|jq -r .data.status)
@@ -3397,7 +3397,7 @@ function usb_flash() {
 			fi
 			exit 1
 		fi
-	elif [ "$OPREATION" == "status" ] && [ "$USB_JOB_ID" == "" ];then
+	elif [ "$OPERATION" == "status" ] && [ "$USB_JOB_ID" == "" ];then
 		OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/usb/queue/" --header 'Authorization: token '$AUTH_TOKEN'' )
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		SCHEDULED_JOB_ID=$(echo $OUTPUT|jq .data.queue_info.scheduled_jobs|jq 'keys[0]')
@@ -3435,7 +3435,7 @@ function usb_flash() {
 			fi
 			exit 1
 		fi
-	elif [ "$OPREATION" == "remove" ] && [ "$USB_JOB_ID" != "" ];then
+	elif [ "$OPERATION" == "remove" ] && [ "$USB_JOB_ID" != "" ];then
 		OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/usb/flashcancel/$USB_JOB_ID" --header 'Authorization: token '$AUTH_TOKEN'' )
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		if [ "$RESULT" == "success" ];then
