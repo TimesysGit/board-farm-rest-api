@@ -7,7 +7,7 @@ servers:
 components:
   securitySchemes:
     tokenAuth:
-      type: http	
+      type: htttp
       scheme: token
 security:
   - tokenAuth: []
@@ -80,4 +80,4 @@ paths:
                       - AssignedTo
                       - PowerCommands
                 required:
-                  - result                                
+                  - result
