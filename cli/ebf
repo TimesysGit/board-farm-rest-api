@@ -1196,7 +1196,7 @@ function device_release() {
   OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/release"  --header 'Authorization: token '$AUTH_TOKEN'')
   RESULT=$(echo $OUTPUT|jq -r .result)
   if [ "$RESULT" == "success" ];then
-    echo "Device \"$DEVICE\" is Released and available to Use."
+    echo "Device \"$DEVICE\" is released and available to use."
   else
 		if [ "$RESULT" == "" ];then
 			echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
