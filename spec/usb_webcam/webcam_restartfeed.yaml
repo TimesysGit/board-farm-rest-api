@@ -38,8 +38,10 @@ paths:
               schema:
                 type: object
                 properties:
-                  status:
+                  result:
                     type: string
-                  msg:
+                  message:
                     type: string
+                required:
+                  - result
       x-codegen-request-body-name: data
