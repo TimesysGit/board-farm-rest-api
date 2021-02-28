@@ -37,11 +37,19 @@ paths:
               schema:
                 type: object
                 properties:
-                  file:
-                    title: File
+                  result:
                     type: string
-                    format: uri
-                    readOnly: true
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    file:
+                      title: File
+                      type: string
+                      format: uri
+                      readOnly: true
+                required:
+                  - result
     put:
       tags:
       - api
@@ -78,11 +86,14 @@ paths:
               schema:
                 type: object
                 properties:
-                  file:
-                    title: File
+                  result:
                     type: string
-                    format: uri
-                    readOnly: true
+                  message:
+                    type: string
+                  required: 
+                    - result
+                required:
+                  - result
       x-codegen-request-body-name: data
     post:
       tags:
@@ -120,11 +131,14 @@ paths:
               schema:
                 type: object
                 properties:
-                  file:
-                    title: File
+                  result:
                     type: string
-                    format: uri
-                    readOnly: true
+                  message:
+                    type: string
+                  required: 
+                    - result
+                required:
+                  - result
       x-codegen-request-body-name: data
     delete:
       tags:
@@ -154,9 +168,5 @@ paths:
                     type: string
                   message:
                     type: string
-                  required: 
-                    - result
-
-
-
-      
+                required:
+                  - result      

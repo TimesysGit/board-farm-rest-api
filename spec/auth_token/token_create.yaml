@@ -26,7 +26,13 @@ paths:
                 type: object
                 properties:
                   result:
+                    type: string
+                  message:
+                    type: string
+                  data:
                     type: object
                     properties:
                       token:
                         type: string
+                required:
+                  - result

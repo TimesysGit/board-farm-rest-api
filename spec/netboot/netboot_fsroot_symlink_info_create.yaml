@@ -34,8 +34,12 @@ paths:
                 properties:
                   result:
                     type: string
+                  message:
+                    type: string
                   data:
                     type: string        
+                required:
+                  - result
     post:
         tags:
         - api
@@ -72,4 +76,8 @@ paths:
                   properties:
                     result:
                       type: string
+                    message:
+                      type: string
+                  required:
+                    - result
         x-codegen-request-body-name: data

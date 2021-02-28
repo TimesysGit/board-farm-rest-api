@@ -36,3 +36,5 @@ paths:
                     type: string
                   message:
                     type: string
+                required:
+                  - result

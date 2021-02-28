@@ -34,6 +34,8 @@ paths:
                 properties:
                   result:
                     type: string
+                  message:
+                    type: string
                   data:
                     type: array
                     items:
@@ -51,6 +53,8 @@ paths:
                             type: string
                           dip:
                             type: string
+                required:
+                  - result
     put:
       tags:
       - api
@@ -100,6 +104,10 @@ paths:
                 properties:
                   result:
                     type: string
+                  message:
+                    type: string
+                required:
+                  - result
       x-codegen-request-body-name: data
     post:
       tags:
@@ -150,6 +158,10 @@ paths:
                 properties:
                   result:
                     type: string
+                  message:
+                    type: string
+                required:
+                  - result
       x-codegen-request-body-name: data
     delete:
       tags:
@@ -172,3 +184,7 @@ paths:
                 properties:
                   result:
                     type: string
+                  message:
+                    type: string
+                required:
+                  - result

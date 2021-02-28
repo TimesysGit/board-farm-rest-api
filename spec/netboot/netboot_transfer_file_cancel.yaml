@@ -39,3 +39,7 @@ paths:
                 properties:
                   result:
                     type: string
+                  message:
+                    type: string
+                required:
+                  - result

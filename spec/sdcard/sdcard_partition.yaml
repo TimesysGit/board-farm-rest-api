@@ -40,4 +40,8 @@ paths:
                 properties:
                   result:
                     type: string
+                  message:
+                    type: string
+                required:
+                  - result
       x-codegen-request-body-name: data

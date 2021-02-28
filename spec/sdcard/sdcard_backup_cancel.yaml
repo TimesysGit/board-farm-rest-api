@@ -39,5 +39,7 @@ paths:
                 properties:
                   result:
                     type: string
-                  backup_file_name:
+                  message:
                     type: string
+                required:
+                  - result
