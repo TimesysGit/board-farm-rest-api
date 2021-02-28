@@ -49,3 +49,7 @@ paths:
                         properties:
                           info:
                             type: object
+                  message:
+                    type: string
+                required:
+                  - result

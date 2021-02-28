@@ -34,6 +34,8 @@ paths:
                 properties:
                   result:
                     type: string
+                  message:
+                    type: string
                   data:
                     type: object
                     properties:
@@ -45,3 +47,5 @@ paths:
                         type: string
                       hotplug-4:
                         type: string
+                required:
+                  - result

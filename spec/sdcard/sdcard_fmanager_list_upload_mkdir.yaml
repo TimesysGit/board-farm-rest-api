@@ -56,6 +56,10 @@ paths:
                           type: string
                         'type':
                           type: string
+                  message:
+                    type: string
+                required:
+                  - result
     put:
       tags:
       - api
@@ -96,6 +100,8 @@ paths:
                     type: string
                   message:
                     type: string
+                required:
+                  - result
       x-codegen-request-body-name: data
     post:
       tags:
@@ -136,6 +142,8 @@ paths:
                     type: string
                   message:
                     type: string
+                required:
+                  - result
       x-codegen-request-body-name: data
     delete:
       tags:
@@ -165,3 +173,5 @@ paths:
                     type: string
                   message:
                     type: string
+                required:
+                  - result

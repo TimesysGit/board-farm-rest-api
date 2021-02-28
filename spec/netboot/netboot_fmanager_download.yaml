@@ -39,6 +39,8 @@ paths:
                 properties:
                   result:
                     type: string
+                  message:
+                    type: string
                   data:   
                     type: object
                     properties:
@@ -50,3 +52,5 @@ paths:
                         type: boolean
                       file_size:
                         type: integer
+                required:
+                  - result

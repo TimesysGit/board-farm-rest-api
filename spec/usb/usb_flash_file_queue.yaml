@@ -44,4 +44,7 @@ paths:
                             type: object
                           scheduled_jobs:
                             type: object
-                  
+                  message:
+                    type: string
+                required:
+                  - result

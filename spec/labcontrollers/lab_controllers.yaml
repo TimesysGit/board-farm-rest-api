@@ -34,6 +34,8 @@ paths:
                 properties:
                   result:
                     type: string
+                  message:
+                    type: string
                   data:
                     type: array
                     items:
@@ -43,3 +45,5 @@ paths:
                           type: string
                         'type':
                           type: string
+                required:
+                  - result

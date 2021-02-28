@@ -59,4 +59,8 @@ paths:
                         type: string
                       progress_url:
                         type: string
+                  message:
+                    type: string
+                required:
+                  - result
       x-codegen-request-body-name: data

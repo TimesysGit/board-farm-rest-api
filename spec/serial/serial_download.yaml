@@ -27,7 +27,8 @@ paths:
       responses:
         200:
           description: ""
-          content: 
-            application/json:
+          content:
+            application/vnd.ms-excel:
               schema:
                 type: string
+                format: binary
