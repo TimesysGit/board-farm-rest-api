@@ -32,8 +32,11 @@ paths:
               schema:
                 type: object
                 properties:
-                  status:
+                  result:
                     type: string
-                  iUrl:
+                  data:
                     type: string
-                    
+                  messsage:
+                    type: string
+                required:
+                  - result
