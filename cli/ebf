@@ -990,14 +990,6 @@ function help_device_uboot_flash() {
 	exit 1
 }
 
-function execute_api() {
-  METHOD=$1
-  SERVER_URL="$2/api/v0.2/token/"
-  USER_NAME=$3
-  PASSWORD=$4
-  COMMAND=$(curl -k --location --request "$METHOD" "$SERVER_URL"  --header 'Content-Type: application/json' --data-raw '{"username":"'"$USER_NAME"'" , "password":"'"$PASSWORD"'"}')
-  echo "$COMMAND"
-}
 
 function user_authentication() {
   LOGIN=0
