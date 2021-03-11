@@ -1,0 +1,58 @@
+openapi: 3.0.1
+info:
+  title: Generated for EBF-TAS
+  version: '0.2'
+servers:
+- url: https://bfc.timesys.com
+components:
+  securitySchemes:
+    tokenAuth:
+      type: http
+      scheme: token
+security:
+- tokenAuth: []
+paths:
+  /api/v0.2/resources/{ResourceName}/power_measurement/get_data/:
+    get:
+      tags:
+      - api
+      operationId: api_resources_power_measurement_get_data
+      parameters:
+      - name: ResourceName
+        in: path
+        description: A unique value identifying this Lab resource.
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        timestamp:
+                          type: string
+                          format: date-time
+                        voltage:
+                          type: string
+                        current:
+                          type: string
+                        power_on:
+                          type: string
+                    required:
+                     - timestamp
+                     - voltage
+                     - current
+                required:
+                  - result
