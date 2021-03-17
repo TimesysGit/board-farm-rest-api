@@ -1262,7 +1262,7 @@ function device_info() {
       echo " Zombie Name:              $ZOMBIE_NAME"
       echo " Zombie IP:                $ZOMBIE_IP"
       echo " ZOMBIE_URL:               $ZOMBIE_URL"
-      echo " Powe Switch:              $POWER_SWITCH_NAME"
+      echo " Power Switch:             $POWER_SWITCH_NAME"
       echo " Power Switch Port:        $POWER_SWITCH_PORT"
       echo " Power Switch Commands:    ${POWER_SWITCH_COMMANDS[@]}"
       echo " TFTP DIR:                 $NETWORK_TFTP_DIR"
