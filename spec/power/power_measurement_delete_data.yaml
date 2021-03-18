@@ -12,11 +12,11 @@ components:
 security:
 - tokenAuth: []
 paths:
-  /api/v0.2/resources/{ResourceName}/power_measurement/get_data/{token}/:
-    get:
+  /api/v0.2/resources/{ResourceName}/power_measurement/delete/{token}/:
+    delete:
       tags:
       - api
-      operationId: api_resources_power_measurement_get_data
+      operationId: api_resources_power_measurement_delete_data
       parameters:
       - name: ResourceName
         in: path
@@ -42,23 +42,5 @@ paths:
                     type: string
                   message:
                     type: string
-                  data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        timestamp:
-                          type: string
-                          format: date-time
-                        voltage:
-                          type: string
-                        current:
-                          type: string
-                        power_on:
-                          type: string
-                    required:
-                     - timestamp
-                     - voltage
-                     - current
                 required:
                   - result

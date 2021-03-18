@@ -12,7 +12,7 @@ components:
 security:
 - tokenAuth: []
 paths:
-  /api/v0.2/resources/{ResourceName}/power_measurement/stop_capture/:
+  /api/v0.2/resources/{ResourceName}/power_measurement/stop_capture/{token}/:
     post:
       tags:
       - api
@@ -21,6 +21,12 @@ paths:
       - name: ResourceName
         in: path
         description: A unique value identifying this Lab resource.
+        required: true
+        schema:
+          type: string
+      - name: token
+        in: path
+        description: A unique value identifying power measurement instance.
         required: true
         schema:
           type: string
