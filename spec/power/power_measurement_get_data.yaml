@@ -12,7 +12,7 @@ components:
 security:
 - tokenAuth: []
 paths:
-  /api/v0.2/resources/{ResourceName}/power_measurement/get_data/{token}/:
+  /api/v0.2/resources/{ResourceName}/power-measurement/get-data/{token}/:
     get:
       tags:
       - api
