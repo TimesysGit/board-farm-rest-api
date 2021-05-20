@@ -43,22 +43,6 @@ paths:
                   message:
                     type: string
                   data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        timestamp:
-                          type: string
-                          format: date-time
-                        voltage:
-                          type: string
-                        current:
-                          type: string
-                        power_on:
-                          type: string
-                    required:
-                     - timestamp
-                     - voltage
-                     - current
+                    type: string
                 required:
                   - result
