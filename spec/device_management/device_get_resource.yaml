@@ -12,21 +12,21 @@ components:
 security:
 - tokenAuth: []
 paths:
-  /api/v0.2/resources/{ResourceName}/power-measurement/get-data/{token}/:
+  /api/v0.2/devices/{DeviceName}/get-resource/{ResourceType}/:
     get:
       tags:
       - api
-      operationId: api_resources_power_measurement_get_data
+      operationId: api_device_get_resource
       parameters:
-      - name: ResourceName
+      - name: DeviceName
         in: path
-        description: A unique value identifying this Lab resource.
+        description: A unique value identifying this Device.
         required: true
         schema:
           type: string
-      - name: token
+      - name: ResourceType
         in: path
-        description: A unique value identifying power measurement instance.
+        description: Lab Resource type.
         required: true
         schema:
           type: string
