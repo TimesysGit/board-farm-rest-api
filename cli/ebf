@@ -4102,7 +4102,7 @@ case "$OPTION" in
 						fi
 						;;
 					transfer)
-						netboot_transfer $@
+						netboot_transfer "$@"
 						;;
 					download)
 						if [ "$OPTION4" != "" ] && [ "$OPTION4" != "help" ];then
@@ -4182,13 +4182,13 @@ case "$OPTION" in
 						if [ "$1" == "" ] || [ "$1" == "help" ];then
 							help_sdcard_format
 						fi
-						format_sdcard $@
+						format_sdcard "$@"
 						;;
 					partition)
 						if [ "$1" == "" ] || [ "$1" == "help" ];then
 							help_sdcard_partition
 						fi
-						partition_sdcard $@
+						partition_sdcard "$@"
 						;;
 					backup)
 						if [ "$OPTION6" == "" ] && [ "$OPTION4" != "help" ] && [ "$OPTION5" != "help" ];then
@@ -4198,7 +4198,7 @@ case "$OPTION" in
 						fi
 						;;
 					flash)
-						sdcard_flash $@
+						sdcard_flash "$@"
 						;;
 					download)
 						if [ "$OPTION4" != "" ] && [ "$OPTION4" != "help" ];then
@@ -4271,7 +4271,7 @@ case "$OPTION" in
 						if [ "$1" == "" ] || [ "$1" == "help" ];then
 							help_usb_format
 						fi
-						format_sdcard $@
+						format_sdcard "$@"
 						;;
 					partition)
 						if [ "$1" == "" ] || [ "$1" == "help" ];then
@@ -4311,7 +4311,7 @@ case "$OPTION" in
 			uboot)
 				case "$OPTION3" in
 					flash)
-						uboot_flash $@
+						uboot_flash "$@"
 						;;
 					*)
 						help_device_uboot_flash
