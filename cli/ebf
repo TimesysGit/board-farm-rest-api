@@ -1028,7 +1028,7 @@ function user_authentication() {
       read -s -p "Provide the EBF User Password >> " PASSWORD
 			echo ""
     fi
-    if [[ "${USER_NAME}" != "" && "${PASSWORD}" != "" && "{$SERVER_URL}" != "" ]];then
+    if [[ "${USER_NAME}" != "" && "${PASSWORD}" != "" && "${SERVER_URL}" != "" ]];then
       OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/token/"  --header 'Content-Type: application/json' --data-raw '{"username":"'"$USER_NAME"'" , "password":"'"$PASSWORD"'"}')
       AUTH_TOKEN=$(echo $OUTPUT|jq -r .data.token)
 			RESULT=$(echo $OUTPUT|jq -r .result)
@@ -1056,7 +1056,7 @@ function user_authentication() {
     USER_NAME=$(cat ~/.ebfconfig 2> /dev/null |grep "username"|cut -d ":" -f2)
     AUTH_TOKEN=$(cat ~/.ebfconfig 2> /dev/null |grep "token"|cut -d ":" -f2)
     SERVER_URL=$(cat ~/.ebfconfig 2> /dev/null |grep "server"|cut -d ":" -f2-)
-		if [[ "${USER_NAME}" == "" || "${AUTH_TOKEN}" == "" || "{$SERVER_URL}" == "" ]];then
+		if [[ "${USER_NAME}" == "" || "${AUTH_TOKEN}" == "" || "${SERVER_URL}" == "" ]];then
 			echo "[Error] Invalid credentials, Please login again"
 			exit 1
 		fi
