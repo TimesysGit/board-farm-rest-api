@@ -2404,7 +2404,7 @@ function sdcard_info(){
 			if [ "$OPTION2" == "usb" ];then
 				echo "USB Information"
 			else
-				echo "SD CRAD Information"
+				echo "SD Card Information"
 			fi
 			echo ""
 			echo "$SD_DEVICE: $TOTAL_SIZE"
