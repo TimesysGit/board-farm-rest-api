@@ -3,8 +3,6 @@ AUTH_TOKEN=""
 OPTION=""
 OPTION2=""
 SERVER_URL=""
-DEVICE_LIST=()
-MY_DEVICE_LIST=()
 USER_NAME=""
 GPIO_PIN_DATA=""
 VERSION="1.0.2"
@@ -1030,7 +1028,7 @@ function user_authentication() {
       read -s -p "Provide the EBF User Password >> " PASSWORD
 			echo ""
     fi
-    if [[ "${USER_NAME}" != "" && "${PASSWORD}" != "" && "{$SERVER_URL}" != "" ]];then
+    if [[ "${USER_NAME}" != "" && "${PASSWORD}" != "" && "${SERVER_URL}" != "" ]];then
       OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/token/"  --header 'Content-Type: application/json' --data-raw '{"username":"'"$USER_NAME"'" , "password":"'"$PASSWORD"'"}')
       AUTH_TOKEN=$(echo $OUTPUT|jq -r .data.token)
 			RESULT=$(echo $OUTPUT|jq -r .result)
@@ -1058,7 +1056,7 @@ function user_authentication() {
     USER_NAME=$(cat ~/.ebfconfig 2> /dev/null |grep "username"|cut -d ":" -f2)
     AUTH_TOKEN=$(cat ~/.ebfconfig 2> /dev/null |grep "token"|cut -d ":" -f2)
     SERVER_URL=$(cat ~/.ebfconfig 2> /dev/null |grep "server"|cut -d ":" -f2-)
-		if [[ "${USER_NAME}" == "" || "${AUTH_TOKEN}" == "" || "{$SERVER_URL}" == "" ]];then
+		if [[ "${USER_NAME}" == "" || "${AUTH_TOKEN}" == "" || "${SERVER_URL}" == "" ]];then
 			echo "[Error] Invalid credentials, Please login again"
 			exit 1
 		fi
@@ -2404,7 +2402,7 @@ function sdcard_info(){
 			if [ "$OPTION2" == "usb" ];then
 				echo "USB Information"
 			else
-				echo "SD CRAD Information"
+				echo "SD Card Information"
 			fi
 			echo ""
 			echo "$SD_DEVICE: $TOTAL_SIZE"
@@ -4104,7 +4102,7 @@ case "$OPTION" in
 						fi
 						;;
 					transfer)
-						netboot_transfer $@
+						netboot_transfer "$@"
 						;;
 					download)
 						if [ "$OPTION4" != "" ] && [ "$OPTION4" != "help" ];then
@@ -4184,13 +4182,13 @@ case "$OPTION" in
 						if [ "$1" == "" ] || [ "$1" == "help" ];then
 							help_sdcard_format
 						fi
-						format_sdcard $@
+						format_sdcard "$@"
 						;;
 					partition)
 						if [ "$1" == "" ] || [ "$1" == "help" ];then
 							help_sdcard_partition
 						fi
-						partition_sdcard $@
+						partition_sdcard "$@"
 						;;
 					backup)
 						if [ "$OPTION6" == "" ] && [ "$OPTION4" != "help" ] && [ "$OPTION5" != "help" ];then
@@ -4200,7 +4198,7 @@ case "$OPTION" in
 						fi
 						;;
 					flash)
-						sdcard_flash $@
+						sdcard_flash "$@"
 						;;
 					download)
 						if [ "$OPTION4" != "" ] && [ "$OPTION4" != "help" ];then
@@ -4273,7 +4271,7 @@ case "$OPTION" in
 						if [ "$1" == "" ] || [ "$1" == "help" ];then
 							help_usb_format
 						fi
-						format_sdcard $@
+						format_sdcard "$@"
 						;;
 					partition)
 						if [ "$1" == "" ] || [ "$1" == "help" ];then
@@ -4313,7 +4311,7 @@ case "$OPTION" in
 			uboot)
 				case "$OPTION3" in
 					flash)
-						uboot_flash $@
+						uboot_flash "$@"
 						;;
 					*)
 						help_device_uboot_flash
