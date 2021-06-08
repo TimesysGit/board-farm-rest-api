@@ -108,6 +108,7 @@ function help_device() {
 	echo "   sdcard           Partition, Format and other operations related to SDCard management."
 	echo "   usb              Partition, Format and other operations related to USB management."
 	echo "   uboot            For flashing u-bbot ino a device using serial connection through Xmodem/Ymodem/Zmodem"
+	echo "   get-resource     This will return the resource name based on device name and resource type"
   echo ""
   echo "Run 'ebf  <device name> [OPTION] help' for more information of a option."
   echo " "
@@ -301,7 +302,7 @@ function help_device_ssh() {
   echo "   run              Run a command on a device and Display it's OUTPUT using ssh"
   echo "   download         Download a file to a local system from device using ssh"
   echo "   upload           Upload a local file to a device using ssh"
-	echo "   import-key       To import Zombie ssh-key into Zombie for password-less opreations "
+	echo "   import-key       To import Zombie ssh-key into Zombie for password-less operations "
   echo ""
 	echo "Run 'ebf  <device name> ssh [OPTION] help' for more information of a option."
   exit
@@ -988,6 +989,23 @@ function help_device_uboot_flash() {
 	exit 1
 }
 
+function help_power_measurement() {
+	echo " "
+	echo "Usage:   ebf <resource_name> <resource_type> [OPTION] <token>"
+	echo ""
+	echo "Example 1: ebf sdb1 power-measurement start"
+	echo "Example 2: ebf sdb1 power-measurement stop 04366c6a-fde2-424d-9aea"
+	echo "Example 3: ebf sdb1 power-measurement get-data 04366c6a-fde2-424d-9aea"
+	echo "Example 4: ebf sdb1 power-measurement delete 04366c6a-fde2-424d-9aea"
+	echo ""
+	echo "Options:"
+	echo "   start       This will start logging of power measurement readings and return a token"
+	echo "   stop        This will stop logging of power measurement readings"
+	echo "   get-data    This will return the readings measured."
+	echo "   delete      This will delete the power-measurement logs and data files."
+	echo ""
+	exit 1
+}
 
 function user_authentication() {
   LOGIN=0
@@ -1260,7 +1278,7 @@ function device_info() {
       echo " Zombie Name:              $ZOMBIE_NAME"
       echo " Zombie IP:                $ZOMBIE_IP"
       echo " ZOMBIE_URL:               $ZOMBIE_URL"
-      echo " Power Switch:             $POWER_SWITCH_NAME"
+      echo " Power Switch:              $POWER_SWITCH_NAME"
       echo " Power Switch Port:        $POWER_SWITCH_PORT"
       echo " Power Switch Commands:    ${POWER_SWITCH_COMMANDS[@]}"
       echo " TFTP DIR:                 $NETWORK_TFTP_DIR"
@@ -3671,6 +3689,137 @@ function uboot_flash(){
 	fi
 }
 
+function get_resource(){
+	user_authentication
+	DEVICE=$OPTION
+	OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/$OPTION2/$OPTION3"  --header 'Authorization: token '$AUTH_TOKEN'' )
+	RESULT=$(echo $OUTPUT|jq -r .result)
+	if [ "$RESULT" == "success" ];then
+		resource_name=$(echo $OUTPUT|jq -r .data[])
+		if [ "$OPTION4" == "-q" ];then
+			echo "$resource_name"
+		else
+			echo "$resource_name"
+		fi
+	else
+		MESSAGE=$(echo $OUTPUT|jq -r .message)
+		if [ "$RESULT" == "" ];then
+			echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
+			exit 1
+		fi
+		FAILURE_MSG=$(echo $MESSAGE|grep -ow "No Device matches")
+		if [ "$FAILURE_MSG" ];then
+			echo "[ERROR] Device $DEVICE doesn't exsist"
+		else
+			echo $MESSAGE
+		fi
+		exit 1
+	fi
+}
+
+function power_measurement_start(){
+	user_authentication
+	RESOURCE_NAME=$OPTION
+	OUTPUT=$(curl -s -k --location --request POST "$SERVER_URL/api/v0.2/resources/$RESOURCE_NAME/$OPTION2/start-capture/"  --header 'Authorization: token '$AUTH_TOKEN'' )
+	RESULT=$(echo $OUTPUT|jq -r .result)
+	if [ "$RESULT" == "success" ];then
+		token=$(echo $OUTPUT|jq -r .data)
+		if [ "$OPTION4" == "-q" ];then
+			echo "$token"
+		else
+			echo "$token"
+		fi
+	else
+		MESSAGE=$(echo $OUTPUT|jq -r .message)
+		if [ "$RESULT" == "" ];then
+			echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
+			exit 1
+		fi
+		FAILURE_MSG=$(echo $MESSAGE|grep -ow "No Device matches")
+		if [ "$FAILURE_MSG" ];then
+			echo "[ERROR] Device $DEVICE doesn't exsist"
+		else
+			echo $MESSAGE
+		fi
+		exit 1
+	fi
+}
+
+function power_measurement_stop(){
+	user_authentication
+	RESOURCE_NAME=$OPTION
+	TOKEN_ID=$OPTION4
+	OUTPUT=$(curl -s -k --location --request PUT "$SERVER_URL/api/v0.2/resources/$RESOURCE_NAME/$OPTION2/stop-capture/$OPTION4"  --header 'Authorization: token '$AUTH_TOKEN'' )
+	RESULT=$(echo $OUTPUT|jq -r .result)
+	if [ "$RESULT" == "success" ];then
+		echo "$RESULT"
+	else
+		MESSAGE=$(echo $OUTPUT|jq -r .message)
+		if [ "$RESULT" == "" ];then
+			echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
+			exit 1
+		fi
+		FAILURE_MSG=$(echo $MESSAGE|grep -ow "No Device matches")
+		if [ "$FAILURE_MSG" ];then
+			echo "[ERROR] Device $DEVICE doesn't exsist"
+		else
+			echo $MESSAGE
+		fi
+		exit 1
+	fi
+}
+
+function power_measurement_get_data(){
+	user_authentication
+	RESOURCE_NAME=$OPTION
+	TOKEN_ID=$OPTION4
+	COUNT=0
+	OUTPUT=$(curl -s -k --location --request GET "$SERVER_URL/api/v0.2/resources/$RESOURCE_NAME/$OPTION2/get-data/$OPTION4"  --header 'Authorization: token '$AUTH_TOKEN'' )
+	RESULT=$(echo $OUTPUT|jq -r .result)
+	if [ "$RESULT" == "success" ];then
+	        DATA=$(echo $OUTPUT|jq -r .data)
+	        echo $DATA
+	else
+		MESSAGE=$(echo $OUTPUT|jq -r .message)
+		if [ "$RESULT" == "" ];then
+			echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
+			exit 1
+		fi
+		FAILURE_MSG=$(echo $MESSAGE|grep -ow "No Device matches")
+		if [ "$FAILURE_MSG" ];then
+			echo "[ERROR] Device $DEVICE doesn't exsist"
+		else
+			echo $MESSAGE
+		fi
+		exit 1
+	fi
+}
+
+function power_measurement_delete(){
+	user_authentication
+	RESOURCE_NAME=$OPTION
+	TOKEN_ID=$OPTION4
+	OUTPUT=$(curl -s -k --location --request DELETE "$SERVER_URL/api/v0.2/resources/$RESOURCE_NAME/$OPTION2/delete/$OPTION4"  --header 'Authorization: token '$AUTH_TOKEN'' )
+	RESULT=$(echo $OUTPUT|jq -r .result)
+	if [ "$RESULT" == "success" ];then
+		echo "$RESULT"
+	else
+		MESSAGE=$(echo $OUTPUT|jq -r .message)
+		if [ "$RESULT" == "" ];then
+			echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
+			exit 1
+		fi
+		FAILURE_MSG=$(echo $MESSAGE|grep -ow "No Device matches")
+		if [ "$FAILURE_MSG" ];then
+			echo "[ERROR] Device $DEVICE doesn't exsist"
+		else
+			echo $MESSAGE
+		fi
+		exit 1
+	fi
+}
+
+
 OPTION=$1
 shift
 OPTION2=$1
@@ -4277,7 +4426,7 @@ case "$OPTION" in
 						if [ "$1" == "" ] || [ "$1" == "help" ];then
 							help_usb_partition
 						fi
-						partition_sdcard $@
+						partition_sdcard "$@"
 						;;
 					backup)
 						if [ "$OPTION6" == "" ] && [ "$OPTION4" != "help" ] && [ "$OPTION5" != "help" ];then
@@ -4287,7 +4436,7 @@ case "$OPTION" in
 						fi
 						;;
 					flash)
-						usb_flash $@
+						usb_flash "$@"
 						;;
 					download)
 						if [ "$OPTION4" != "" ] && [ "$OPTION4" != "help" ];then
@@ -4318,6 +4467,28 @@ case "$OPTION" in
 						;;
 					esac
 					;;
+			get-resource)
+				if [ "$OPTION5" == "" ];then
+					get_resource
+				else
+					help_device
+				fi
+				;;
+			power-measurement)
+				if [ "$OPTION3" == "start" ];then
+					power_measurement_start
+				elif [ "$OPTION3" == "stop" ] && [ "$OPTION4" != "" ];then
+					power_measurement_stop
+				elif [ "$OPTION3" == "get-data" ] && [ "$OPTION4" != "" ];then
+					power_measurement_get_data
+				elif [ "$OPTION3" == "delete" ] && [ "$OPTION4" != "" ];then
+					power_measurement_delete
+				else
+					echo "[ERROR] Invalid Option"
+					echo ""
+					help_power_measurement
+				fi
+				;;
       *)
 				if [ "$OPTION" == "" ] || [ "$OPTION" == "help" ];then
         	help
