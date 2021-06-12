@@ -10,10 +10,10 @@
 # For /opt/test/testing.conf
 #    Value should be enter in the format TESTING_CLIENT=ebf
 #
-if [ ! -z "$TESTING_CLIENT" ];then
+if [ -n "$TESTING_CLIENT" ];then
   CLIENT=$TESTING_CLIENT
-elif [ -f /opt/test/testing.conf ] && [ "$(cat /opt/test/testing.conf |grep "TESTING_CLIENT"|cut -d ":" -f2 )" != "" ];then
-  CLIENT=$(cat /opt/test/testing.conf |grep "TESTING_CLIENT"|cut -d "=" -f2)
+elif [ -f /opt/test/testing.conf ] && [ -n "$(cat /opt/test/testing.conf | grep "TESTING_CLIENT=" | cut -d "=" -f2)" ];then
+  CLIENT=$(cat /opt/test/testing.conf | grep "TESTING_CLIENT=" | cut -d "=" -f2)
 elif [ $(which ebf) != "" ];then
   CLIENT="ebf"
 elif [ $(which lc) != "" ];then
