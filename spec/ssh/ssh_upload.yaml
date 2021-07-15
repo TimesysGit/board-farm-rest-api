@@ -24,6 +24,33 @@ paths:
         required: true
         schema:
           type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                device_ip:
+                  type: string
+                  description: Device IP address
+                username:
+                  type: string
+                  description: SSH username
+                file:
+                  type: string
+                  format: binary
+                path:
+                  type: string
+                  description: Upload File path. Default /
+                  default: /
+                extract:
+                  type: boolean
+                  description: extract archive on Device
+                  default: false
+              required:
+                - username
+                - device_ip
+                - file
       responses:
         200:
           description: ""

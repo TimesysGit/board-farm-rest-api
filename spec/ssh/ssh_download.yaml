@@ -24,6 +24,29 @@ paths:
         required: true
         schema:
           type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                device_ip:
+                  type: string
+                  description: Device IP address
+                username:
+                  type: string
+                  description: SSH username
+                path:
+                  type: string
+                  description: Download File path. Default /
+                  default: /
+                compress:
+                  type: boolean
+                  description: compress files on Device before downloading
+                  default: false
+              required:
+                - username
+                - device_ip
       responses:
         200:
           description: ""

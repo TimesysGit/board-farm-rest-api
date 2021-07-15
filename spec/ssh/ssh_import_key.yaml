@@ -24,6 +24,25 @@ paths:
         required: true
         schema:
           type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                device_ip:
+                  type: string
+                  description: Device IP address
+                username:
+                  type: string
+                  description: SSH username
+                password:
+                  type: string
+                  description: SSH password
+              required:
+                - username
+                - device_ip
+                - password
       responses:
         201:
           description: ""
