@@ -26,15 +26,24 @@ paths:
           type: string
       requestBody:
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
               properties:
                 file:
-                  title: File
                   type: string
-                  format: uri
-                  readOnly: true
+                  format: binary
+                transferring_tool:
+                  type: string
+                cmd_args:
+                  type: string
+                extraction_dir:
+                  type: string
+                delete_after:
+                  type: boolean
+              required:
+                - file
+        required: true
         required: true
       responses:
         200:
