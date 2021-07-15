@@ -24,6 +24,18 @@ paths:
         required: true
         schema:
           type: string
+      - name: path
+        in: query
+        description: Download File path. Default /
+        required: true
+        schema:
+          type: string
+      - name: compress
+        in: query
+        description: compress files on Device before downloading
+        required: false
+        schema:
+          type: boolean
       responses:
         200:
           description: ""

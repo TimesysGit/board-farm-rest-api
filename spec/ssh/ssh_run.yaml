@@ -24,6 +24,29 @@ paths:
         required: true
         schema:
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                device_ip:
+                  type: string
+                  description: Device IP address
+                username:
+                  type: string
+                  description: SSH username
+                command:
+                  type: string
+                  description: command to run over SSH
+                path:
+                  type: string
+                  description: Device filesystem location to run commad. Default ~
+                  default: ~
+              required:
+                - device_ip
+                - username
+                - command
       responses:
         200:
           description: ""

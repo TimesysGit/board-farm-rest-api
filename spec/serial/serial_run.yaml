@@ -24,6 +24,17 @@ paths:
         required: true
         schema:
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                command:
+                  type: string
+                  description: command to run over serial connection
+              required:
+                - command
       responses:
         200:
           description: ""

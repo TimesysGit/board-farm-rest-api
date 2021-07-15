@@ -26,16 +26,23 @@ paths:
           type: string
       requestBody:
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
               properties:
                 file:
-                  title: File
                   type: string
-                  format: uri
-                  readOnly: true
-        required: true
+                  format: binary
+                path:
+                  type: string
+                  description: Upload File path. Default /
+                  default: /
+                extract:
+                  type: boolean
+                  description: extract archive on Device
+                  default: false
+              required:
+                - file
       responses:
         200:
           description: ""
