@@ -29,6 +29,22 @@ paths:
           application/json:
             schema:
               type: object
+              properties:
+                partitions:
+                  type: array
+                  items: 
+                    type: object
+                    properties:
+                      label:
+                        type: string
+                      size:
+                        type: string
+                      type:
+                        type: string
+                    required:
+                      - label
+                      - size
+                      - type
         required: true
       responses:
         201:

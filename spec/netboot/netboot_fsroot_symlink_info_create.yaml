@@ -63,8 +63,6 @@ paths:
                     title: Symlink dir
                     minLength: 1
                     type: string
-                  device_port:
-                    type: string
           required: true
         responses:
           201:

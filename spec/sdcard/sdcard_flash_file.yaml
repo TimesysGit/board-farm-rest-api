@@ -26,21 +26,32 @@ paths:
           type: string
       requestBody:
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              required:
-              - partition
               type: object
               properties:
                 file:
-                  title: File
                   type: string
-                  format: uri
-                  readOnly: true
+                  format: binary
+                bmap_file:
+                  type: string
+                  format: binary
                 partition:
                   title: Partition
                   minLength: 1
                   type: string
+                flash_tool:
+                  type: string
+                cmd_args:
+                  type: string
+                backup:
+                  type: boolean
+                delete_after:
+                  type: boolean
+                mkfs:
+                  type: boolean
+              required:
+                - file
         required: true
       responses:
         200:
