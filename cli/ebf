@@ -64,6 +64,7 @@ function help_list() {
   echo "Commands:"
   echo "   config           Provide the details of User configured and EBF-Server"
   echo "   devices          Provide the list of all the active devices in EBF-server"
+	echo "   resources        Provide the List of all the resources in EBF-Server"
   echo ""
 	echo "Run 'ebf <device-name> help' for Information regarding device specific features"
   exit 1
@@ -1128,6 +1129,31 @@ function list_devices() {
 		exit 1
 	fi
 }
+
+function list_resources() {
+  user_authentication
+  COUNT=0
+  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/resources/"  --header 'Authorization: token '$AUTH_TOKEN'')
+	RESULT=$(echo $OUTPUT|jq -r .result)
+	resource=$(echo $OUTPUT|jq -r .data[$COUNT])
+	if [ "$RESULT" == "success" ];then
+		while [ "$resource" != "null" ];
+		do
+     COUNT=`expr $COUNT + 1`
+		 echo "$resource"
+		 resource=$(echo $OUTPUT|jq -r .data[$COUNT])
+    done
+	else
+		MESSAGE=$(echo $OUTPUT|jq -r .message)
+		if [ "$RESULT" == "" ];then
+			echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
+			exit 1
+		fi
+			echo $MESSAGE
+		exit 1
+	fi
+}
+
 
 function mydevices() {
   user_authentication
@@ -3891,6 +3917,13 @@ case "$OPTION" in
           help_list
         fi
         ;;
+			resources)
+	      if [ "$OPTION3" == "" ];then
+	        list_resources
+	      else
+	        help_list
+	      fi
+	      ;;
       *)
         help_list
         ;;
