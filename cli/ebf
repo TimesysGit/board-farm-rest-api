@@ -1013,10 +1013,19 @@ function help_power_measurement() {
 function user_authentication() {
   LOGIN=0
   check_dependencies
+	IS_OLD_CONFIG=$(cat ~/.ebfconfig 2>/dev/null|grep "username:" )
+	if [ $IS_OLD_CONFIG ];then
+		USER_NAME=$(cat ~/.ebfconfig |grep "username"|cut -d ":" -f2)
+		SERVER_URL=$(cat ~/.ebfconfig |grep "server"|cut -d ":" -f2-)
+		AUTH_TOKEN=$(cat ~/.ebfconfig 2> /dev/null |grep "token"|cut -d ":" -f2)
+		echo "token=$AUTH_TOKEN" > ~/.ebfconfig
+		echo "username=$USER_NAME" >> ~/.ebfconfig
+		echo "server=$SERVER_URL" >> ~/.ebfconfig
+	fi
   if [ "$OPTION" == "login" ];then
     if [ -f ~/.ebfconfig ];then
-      USER_NAME=$(cat ~/.ebfconfig |grep "username"|cut -d ":" -f2)
-      SERVER_URL=$(cat ~/.ebfconfig |grep "server"|cut -d ":" -f2-)
+      USER_NAME=$(cat ~/.ebfconfig |grep "username"|cut -d "=" -f2)
+      SERVER_URL=$(cat ~/.ebfconfig |grep "server"|cut -d "=" -f2-)
       if [ $USER_NAME ];then
         echo "Already configured for user \"$USER_NAME\" and EBF-Server \"$SERVER_URL\""
         read -r -p "Do you want to Login with a different User? [Y/N] " response
@@ -1055,9 +1064,9 @@ function user_authentication() {
 			RESULT=$(echo $OUTPUT|jq -r .result)
 			if [ "$RESULT" == "success" ];then
     		if [ "$AUTH_TOKEN" != "null" ];then
-        	echo "token:$AUTH_TOKEN" > ~/.ebfconfig
-        	echo "username:$USER_NAME" >> ~/.ebfconfig
-        	echo "server:$SERVER_URL" >> ~/.ebfconfig
+        	echo "token=$AUTH_TOKEN" > ~/.ebfconfig
+        	echo "username=$USER_NAME" >> ~/.ebfconfig
+        	echo "server=$SERVER_URL" >> ~/.ebfconfig
         	echo "Successfully logged in as user $USER_NAME"
       	else
         	echo "[ERROR] Invalid EBF-Server URL or Credentials"
@@ -1074,9 +1083,9 @@ function user_authentication() {
       exit 1
     fi
   else
-    USER_NAME=$(cat ~/.ebfconfig 2> /dev/null |grep "username"|cut -d ":" -f2)
-    AUTH_TOKEN=$(cat ~/.ebfconfig 2> /dev/null |grep "token"|cut -d ":" -f2)
-    SERVER_URL=$(cat ~/.ebfconfig 2> /dev/null |grep "server"|cut -d ":" -f2-)
+    USER_NAME=$(cat ~/.ebfconfig 2> /dev/null |grep "username"|cut -d "=" -f2)
+    AUTH_TOKEN=$(cat ~/.ebfconfig 2> /dev/null |grep "token"|cut -d "=" -f2)
+    SERVER_URL=$(cat ~/.ebfconfig 2> /dev/null |grep "server"|cut -d "=" -f2-)
 		if [[ "${USER_NAME}" == "" || "${AUTH_TOKEN}" == "" || "${SERVER_URL}" == "" ]];then
 			echo "[Error] Invalid credentials, Please login again"
 			exit 1
@@ -1632,14 +1641,14 @@ function ssh_import_key() {
 	MESSAGE=$(echo $OUTPUT|jq -r .message)
 	if [ "$RESULT" == "success" ];then
 		echo "Successfully Zombie SSH-KEY Imported to \"$DEVICE\""
-		if cat  ~/.ebfconfig | grep ^"$DEVICE:IP" >/dev/null; then
-			OLD_DEVICE_IP=$(cat ~/.ebfconfig|grep $DEVICE:IP|cut -d ':' -f3)
-			OLD_USERNAME=$(cat ~/.ebfconfig|grep $DEVICE:USERNAME|cut -d ':' -f3)
-			sed -i "s/$DEVICE:IP:$OLD_DEVICE_IP/$DEVICE:IP:$DEVICE_IP/gi" ~/.ebfconfig
-			sed -i "s/$DEVICE:USERNAME:$OLD_USERNAME/$DEVICE:USERNAME:$DEVICE_USERNAME/gi" ~/.ebfconfig
+		if cat  ~/.ebfconfig | grep ^"$DEVICE=IP" >/dev/null; then
+			OLD_DEVICE_IP=$(cat ~/.ebfconfig|grep $DEVICE=IP|cut -d '=' -f3)
+			OLD_USERNAME=$(cat ~/.ebfconfig|grep $DEVICE=USERNAME|cut -d '=' -f3)
+			sed -i "s/$DEVICE=IP=$OLD_DEVICE_IP/$DEVICE=IP=$DEVICE_IP/gi" ~/.ebfconfig
+			sed -i "s/$DEVICE=USERNAME=$OLD_USERNAME/$DEVICE=USERNAME=$DEVICE_USERNAME/gi" ~/.ebfconfig
 		else
-			echo "$DEVICE:IP:$DEVICE_IP" >> ~/.ebfconfig
-			echo "$DEVICE:USERNAME:$DEVICE_USERNAME" >> ~/.ebfconfig
+			echo "$DEVICE=IP=$DEVICE_IP" >> ~/.ebfconfig
+			echo "$DEVICE=USERNAME=$DEVICE_USERNAME" >> ~/.ebfconfig
 		fi
 	else
 		if [ "$RESULT" == "" ];then
@@ -1665,8 +1674,8 @@ function execute_ssh_command() {
 		DEVICE_COMMAND=$(jq -aRs . <<< $DEVICE_COMMAND)
 		DEVICE_COMMAND=${DEVICE_COMMAND#\"}
 		DEVICE_COMMAND=${DEVICE_COMMAND%\"}
-		DEVICE_IP=$(cat ~/.ebfconfig|grep $DEVICE:IP|cut -d ':' -f3)
-		DEVICE_USERNAME=$(cat ~/.ebfconfig|grep $DEVICE:USERNAME|cut -d ':' -f3)
+		DEVICE_IP=$(cat ~/.ebfconfig|grep $DEVICE=IP|cut -d '=' -f3)
+		DEVICE_USERNAME=$(cat ~/.ebfconfig|grep $DEVICE=USERNAME|cut -d '=' -f3)
 		if [ "$DEVICE_IP" == "" ] || [ "$DEVICE_USERNAME" == "" ];then
 			echo "No SSH-KEY is found for device \"$DEVICE\", Please import key first"
 			help_device_ssh_import_key
@@ -1709,8 +1718,8 @@ function execute_ssh_command() {
 function ssh_download() {
 	user_authentication
   DEVICE=$OPTION
-	DEVICE_IP=$(cat ~/.ebfconfig|grep $DEVICE:IP|cut -d ':' -f3)
-	DEVICE_USERNAME=$(cat ~/.ebfconfig|grep $DEVICE:USERNAME|cut -d ':' -f3)
+	DEVICE_IP=$(cat ~/.ebfconfig|grep $DEVICE=IP|cut -d '=' -f3)
+	DEVICE_USERNAME=$(cat ~/.ebfconfig|grep $DEVICE=USERNAME|cut -d '=' -f3)
 	if [ "$DEVICE_IP" == "" ] || [ "$DEVICE_USERNAME" == "" ];then
 		echo "No SSH-KEY is found for device \"$DEVICE\", Please import key first"
 		help_device_ssh_import_key
@@ -1758,8 +1767,8 @@ function ssh_upload() {
 	SRC_FILE_PATH=$OPTION4
 	DST_FILE_PATH=${OPTION5}
 	FILE_PERMISSIONS=${OPTION6}
-	DEVICE_IP=$(cat ~/.ebfconfig|grep $DEVICE:IP|cut -d ':' -f3)
-	DEVICE_USERNAME=$(cat ~/.ebfconfig|grep $DEVICE:USERNAME|cut -d ':' -f3)
+	DEVICE_IP=$(cat ~/.ebfconfig|grep $DEVICE=IP|cut -d '=' -f3)
+	DEVICE_USERNAME=$(cat ~/.ebfconfig|grep $DEVICE=USERNAME|cut -d '=' -f3)
 	if [ "$DEVICE_IP" == "" ] || [ "$DEVICE_USERNAME" == "" ];then
 		echo "No SSH-KEY is found for device \"$DEVICE\", Please import key first"
 		help_device_ssh_import_key
