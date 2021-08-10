@@ -40,9 +40,12 @@ paths:
                 properties:
                   result:
                     type: string
+                    description: success/fail
                   message:
                     type: string
+                    description: failure reason
                   data:
                     type: string
+                    description: Video URL
                 required:
                   - result
