@@ -12,21 +12,15 @@ components:
 security:
 - tokenAuth: []
 paths:
-  /api/v0.2/resources/{ResourceName}/camera/get-ref/{token}):
+  /api/v0.2/resources/{ResourceName}/camera/capture/:
     get:
       tags:
       - api
-      operationId: api_resources_camera_get_ref
+      operationId: api_resources_camera_capture
       parameters:
       - name: ResourceName
         in: path
-        description: A unique value identifying this Lab resource.
-        required: true
-        schema:
-          type: string
-      - name: token
-        in: path
-        description: A unique value identifying video recording instance.
+        description: A unique value identifying this camera resource.
         required: true
         schema:
           type: string
@@ -40,9 +34,12 @@ paths:
                 properties:
                   result:
                     type: string
-                  message:
-                    type: string
+                    description: success/fail
                   data:
                     type: string
+                    description: Image URL
+                  messsage:
+                    type: string
+                    description: failure reason
                 required:
                   - result

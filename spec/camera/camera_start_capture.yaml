@@ -1,0 +1,82 @@
+openapi: 3.0.1
+info:
+  title: Generated for EBF-TAS
+  version: '0.2'
+servers:
+- url: https://bfc.timesys.com
+components:
+  securitySchemes:
+    tokenAuth:
+      type: http
+      scheme: token
+security:
+- tokenAuth: []
+paths:
+  /api/v0.2/resources/{ResourceName}/camera/start-capture/:
+    post:
+      operationId: api_resources_camera_start_default_capture
+      parameters:
+      - name: ResourceName
+        in: path
+        description: A unique value identifying this Lab resource. Records a 10 seconds clip with this Lab resource. 
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                    required:
+                      - token
+                required:
+                  - result
+  /api/v0.2/resources/{ResourceName}/camera/start-capture/{Duration}/:
+    post:
+      operationId: api_resources_camera_start_capture
+      parameters:
+      - name: ResourceName
+        in: path
+        description: A unique value identifying this Lab resource.
+        required: true
+        schema:
+          type: string
+      - name: Duration
+        in: path
+        description: Recording duration in seconds
+        required: true
+        schema:
+          type: integer
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                    required:
+                      - token
+                required:
+                  - result

@@ -12,11 +12,11 @@ components:
 security:
 - tokenAuth: []
 paths:
-  /api/v0.2/resources/{ResourceName}/camera/start-capture/{Duration}/:
-    post:
+  /api/v0.2/resources/{ResourceName}/camera/get-ref/{token}):
+    get:
       tags:
       - api
-      operationId: api_resources_camera_start_capture
+      operationId: api_resources_camera_get_ref
       parameters:
       - name: ResourceName
         in: path
@@ -24,12 +24,12 @@ paths:
         required: true
         schema:
           type: string
-      - name: Duration
+      - name: token
         in: path
-        description: Recording duration in seconds.
+        description: A unique value identifying video recording instance.
         required: true
         schema:
-          type: integer
+          type: string
       responses:
         200:
           description: ""
@@ -40,14 +40,12 @@ paths:
                 properties:
                   result:
                     type: string
+                    description: success/fail
                   message:
                     type: string
+                    description: failure reason
                   data:
-                    type: object
-                    properties:
-                      token:
-                        type: string
-                    required:
-                      - token
+                    type: string
+                    description: Video URL
                 required:
                   - result
