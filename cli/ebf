@@ -1011,6 +1011,26 @@ function help_power_measurement() {
 	exit 1
 }
 
+function help_camera(){
+	echo " "
+	echo "Usage:   ebf <camera_resource_name> camera capture|start-capture|get-ref <token-id>"
+	echo ""
+	echo "Example 1 -> Capture Image"
+	echo "                ebf CAM1 camera capture"
+	echo "Example 2 -> Capture Image and Save in to a file"
+	echo "                ebf CAM1 camera capture -o screenshot.jpg"
+	echo "Example 3 -> Start Video Recording"
+	echo "                ebf CAM1 camera start-capture (By default it captures 10s video)"
+	echo "Example 4 -> Start Video Recording with Time duration"
+	echo "                ebf CAM1 camera start-capture -d 60 (Time Duration should be in seconds)"
+	echo "Example 5 -> Know the URL of Captured Video using Token"
+	echo "                ebf CAM1 camera get-ref <token-id>"
+	echo "Example 6 -> Download the captured video using token-id"
+	echo "                ebf CAM1 camera get-ref <token-id> -o test_record.mp4"
+	echo ""
+	exit 1
+}
+
 function user_authentication() {
   LOGIN=0
   check_dependencies
@@ -1153,7 +1173,6 @@ function list_resources() {
 		exit 1
 	fi
 }
-
 
 function mydevices() {
   user_authentication
@@ -3857,6 +3876,125 @@ function power_measurement_delete(){
 	fi
 }
 
+function camera_screenshot_capture(){
+	user_authentication
+	RESOURCE_NAME=$OPTION
+	if [ "$OPTION4" == "" ] || [ "$OPTION4" == "-o" -a "$OPTION5" != "" ];then
+		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/resources/$RESOURCE_NAME/camera/$OPTION3"  --header 'Authorization: token '$AUTH_TOKEN'' )
+		RESULT=$(echo $OUTPUT|jq -r .result)
+		IMAGE_URL=$(echo $OUTPUT|jq -r .data)
+		if [ "$RESULT" == "success" ];then
+			if [ "$OPTION5" != "" ];then
+				curl ${CURL_ARGS} -o $OPTION5 $IMAGE_URL
+				if [ $? -ne 0 ];then
+					echo "[ERROR] FilePath doesn't exist $OPTION5"
+					exit 1
+				else
+					echo "Successfully Downloaded the file $OPTION5"
+					exit 0
+				fi
+			else
+				echo "$IMAGE_URL"
+			fi
+		else
+			MESSAGE=$(echo $OUTPUT|jq -r .message)
+			if [ "$RESULT" == "" ];then
+				echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
+				exit 1
+			fi
+			FAILURE_MSG=$(echo $MESSAGE|grep -ow "No Device matches")
+			if [ "$FAILURE_MSG" ];then
+				echo "[ERROR] Resource $DEVICE doesn't exsist"
+			else
+				echo "ERROR: Could not capture Image"
+			fi
+			exit 1
+		fi
+	else
+		help_camera
+	fi
+}
+
+function camera_video_capture(){
+	user_authentication
+	RESOURCE_NAME=$OPTION
+	DURATION=10
+	if [ "$OPTION4" == "" ] || [ "$OPTION4" == "-d" -a "$OPTION5" != "" ];then
+		if [ "$OPTION4" == "-d" ];then
+			if [[ "$OPTION5" =~ ^[0-9]+$ ]];then
+				DURATION=$OPTION5
+			else
+				echo "[ERROR] Not a valid option"
+				help_camera
+				exit 1
+			fi
+		fi
+		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/resources/$RESOURCE_NAME/camera/$OPTION3/$DURATION/"  --header 'Authorization: token '$AUTH_TOKEN'' )
+		RESULT=$(echo $OUTPUT|jq -r .result)
+		TOKEN_ID=$(echo $OUTPUT|jq -r .data.token)
+		if [ "$RESULT" == "success" ];then
+			echo "$TOKEN_ID"
+		else
+			MESSAGE=$(echo $OUTPUT|jq -r .message)
+			if [ "$RESULT" == "" ];then
+				echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
+				exit 1
+			fi
+			FAILURE_MSG=$(echo $MESSAGE|grep -ow "No Device matches")
+			if [ "$FAILURE_MSG" ];then
+				echo "[ERROR] Resource $DEVICE doesn't exsist"
+			else
+				echo $MESSAGE
+			fi
+			exit 1
+		fi
+	else
+		help_camera
+	fi
+}
+
+function camera_captured_video_download(){
+	user_authentication
+	RESOURCE_NAME=$OPTION
+	TOKEN_ID=$OPTION4
+	if [ "$OPTION5" == "" ] || [ "$OPTION5" == "-o" -a "$OPTION6" != "" ];then
+		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/resources/$RESOURCE_NAME/camera/get-ref/$TOKEN_ID/"  --header 'Authorization: token '$AUTH_TOKEN'' )
+		RESULT=$(echo $OUTPUT|jq -r .result)
+		VIDEO_URL=$(echo $OUTPUT|jq -r .data)
+		if [ "$RESULT" == "success" ];then
+			if [ "$OPTION6" != "" ];then
+				curl ${CURL_ARGS} -o $OPTION6 $VIDEO_URL
+				if [ $? -ne 0 ];then
+					echo "[ERROR] FilePath doesn't exist $OPTION6"
+
+					exit 1
+				else
+					echo "Successfully Downloaded the file $OPTION6"
+					exit 0
+				fi
+			else
+				echo "$VIDEO_URL"
+			fi
+		else
+			MESSAGE=$(echo $OUTPUT|jq -r .message)
+			if [ "$RESULT" == "" ];then
+				echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
+				exit 1
+			fi
+			FAILURE_MSG=$(echo $MESSAGE|grep -ow "No Device matches")
+			if [ "$FAILURE_MSG" ];then
+				echo "[ERROR] Resource $DEVICE doesn't exsist"
+			else
+				echo $MESSAGE
+			fi
+			exit 1
+		fi
+	else
+		help_camera
+	fi
+}
+
+
 if [ $1 = "--debug" ] ; then
     CURL_ARGS="${CURL_ARGS} --trace-ascii /tmp/curl-trace.log"
     shift
@@ -4536,6 +4674,19 @@ case "$OPTION" in
 					echo "[ERROR] Invalid Option"
 					echo ""
 					help_power_measurement
+				fi
+				;;
+			camera)
+				if [ "$OPTION3" == "capture" ] && [ "$OPTION6" == "" ];then
+					camera_screenshot_capture
+				elif [ "$OPTION3" == "start-capture" ] && [ "$OPTION6" == "" ];then
+					camera_video_capture
+				elif [ "$OPTION3" == "get-ref" ] && [ "$OPTION4" != "" ] && [ "$OPTION7" == "" ];then
+					camera_captured_video_download
+				else
+					echo "[ERROR] Invalid Option"
+					echo ""
+					help_camera
 				fi
 				;;
       *)
