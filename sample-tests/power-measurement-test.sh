@@ -10,6 +10,11 @@
 # For /opt/test/testing.conf
 #    Value should be enter in the format TESTING_CLIENT=ebf
 #
+WORKLOAD_COMMAND="sudo stress --cpu 4 --io 3 --vm 2 --vm-bytes 256M --timeout 60s  2> /dev/null"
+THRESHOLD_POWER=2.500
+MAX_POWER_COMMAND="| xargs -n 1| tail -n+2| cut -d',' -f2,3 --output-delimiter=' '| awk '{printf "%.3f\\n", $1*$2/1000000}'| sort -r| head -1"
+
+
 if [ -n "$TESTING_CLIENT" ];then
   CLIENT=$TESTING_CLIENT
 elif [ -f /opt/test/testing.conf ] && [ -n "$(cat /opt/test/testing.conf | grep "TESTING_CLIENT=" | cut -d "=" -f2)" ];then
@@ -62,10 +67,11 @@ fi
 
 echo "token=$token"
 
-echo "Performing some workload (find)"
+echo "Performing some workload (stress test)"
 
-# run the test no longer than 1 minute
-timeout -k 5s 60s sudo find / 2>&1 >/dev/null
+# run the stress test on board
+${CLIENT} ${BOARD} ssh run "${WORKLOAD_COMMAND}"
+
 
 echo "Stopping power measurement"
 
@@ -75,13 +81,24 @@ $CLIENT $RESOURCE power-measurement stop $token || \
 echo "Getting data"
 
 echo "Here is the data:"
-$CLIENT $RESOURCE power-measurement get-data $token || \
+POWER_DATA=$($CLIENT $RESOURCE power-measurement get-data $token) || \
     error_out "Could not get power data with $CLIENT, using token $token"
+
+echo $POWER_DATA
+
+MAX_POWER_USED=`echo "$POWER_DATA" | xargs -n 1| tail -n+2| cut -d',' -f2,3 --output-delimiter=' '| awk '{printf "%.3f\\n", $1*$2/1000000}'| sort -r| head -1`
+echo "MAX-POWER-USED=$MAX_POWER_USED"
+echo "THRESHOLD-POWER=$THRESHOLD_POWER"
 
 echo "Deleting the data on the server"
 
 $CLIENT $RESOURCE power-measurement delete $token || \
     echo "Warning: Could not delete data for token $token on server"
 
-echo "FIXTHIS - should analyze the data here..."
-echo "Done."
+if  [ "${MAX_POWER_USED%%.*}" -lt "${THRESHOLD_POWER%%.*}" ]  || [ "${MAX_POWER_USED%%.*}" -eq "${THRESHOLD_POWER%%.*}" -a "${MAX_POWER_USED##*.}" -lt "${THRESHOLD_POWER##*.}" ];then
+  echo "Power Measurement test is passed"
+  return 0
+else
+  echo "Power Measurement test is failed"
+  return 1
+fi
