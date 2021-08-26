@@ -1,0 +1,12 @@
+{
+    "schema_version":"1.0",
+    "criteria":[
+        {
+            "tguid":"default.stress_workload.max_power",
+            "reference":{
+                "value":2.5,
+                "operator":"le"
+            }
+        }
+    ]
+}

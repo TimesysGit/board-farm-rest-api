@@ -1,0 +1,8 @@
+{
+    "testName": "Benchmark.BF_power_test",
+    "success_links": {"log": "testlog.txt", "plot": "plot.png", "xlsx": "results.xlsx"},
+    "specs": {
+        "default": {
+        }
+    }
+}

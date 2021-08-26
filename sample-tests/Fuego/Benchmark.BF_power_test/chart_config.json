@@ -1,0 +1,4 @@
+{
+    "chart_type": "measure_plot",
+    "measures":["default.stress_workload.max_power"]
+}

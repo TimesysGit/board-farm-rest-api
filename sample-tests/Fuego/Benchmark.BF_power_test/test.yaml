@@ -1,0 +1,21 @@
+fuego_package_version: 1
+name: Benchmark.BF_power_test
+description: |
+    Uses board farm APIs to perform a power measurement
+    test on a target board.
+
+license: MIT
+author: Tim Bird <tim.bird@sony.com>
+maintainer: Tim Bird <tim.bird@sony.com>
+version: 1
+fuego_release: 1
+type: Benchmark
+tags: ['power']
+data_files:
+    - chart_config.json
+    - criteria.json
+    - fuego_test.sh
+    - parser.py
+    - reference.json
+    - spec.json
+    - test.yaml

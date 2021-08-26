@@ -1,0 +1,18 @@
+{
+    "test_sets":[
+        {
+            "name":"default",
+            "test_cases":[
+                {
+                    "name":"stress_workload",
+                    "measurements":[
+                        {
+                            "name":"max_power",
+                            "unit":"Watts"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
