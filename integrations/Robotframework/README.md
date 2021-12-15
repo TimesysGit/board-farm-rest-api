@@ -86,4 +86,4 @@ the Robot Framework test suite.
 
 **For More Information, please see:**
 
-[EBF Website](https://timesys.com/solutions/embedded-board-farm/)
+[Timesys EBF Website](https://timesys.com/solutions/embedded-board-farm/)
