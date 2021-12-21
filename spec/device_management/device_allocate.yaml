@@ -12,7 +12,7 @@ components:
 security:
   - tokenAuth: []
 paths:
-  /api/v0.2/devices/{DeviceName}/assign/[{duration}]:
+  /api/v0.2/devices/{DeviceName}/assign/{duration}:
     get:
       tags:
       - api
@@ -26,11 +26,38 @@ paths:
           type: string
       - name: duration
         in: path
-        description: A number of minutes for the allocation to last
+        description: |
+          A number of minutes for the allocation to last
           If the duration is omitted, then the server will utilize
           a server-configured default duration (either 'forever' or
           some server-configured number of minutes)
-        required: false
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - result
+  /api/v0.2/devices/{DeviceName}/assign:
+    get:
+      tags:
+      - api
+      operationId: api_devices_allocate
+      parameters:
+      - name: DeviceName
+        in: path
+        description: A unique value identifying this device.
+        required: true
         schema:
           type: string
       responses:
