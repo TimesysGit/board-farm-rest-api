@@ -2007,7 +2007,7 @@ function device_console() {
     DEVICE_PORT=$(echo $OUTPUT|jq -r .data.lab.Zombie.DevicePort)
     ZOMBIE_IP=$(echo $OUTPUT|jq -r .data.lab.Zombie.IPAddress)
     if [ "$ZOMBIE_IP" != "" ] && [ "$DEVICE_PORT" != "" ];then
-      sshpass -p "zuser" ssh -t zuser@$ZOMBIE_IP "connect_serial DUT$DEVICE_PORT"
+      sshpass -p "zuser" ssh -o 'StrictHostKeyChecking no' -t zuser@$ZOMBIE_IP "connect_serial DUT$DEVICE_PORT"
     else
       echo "[ERROR] Couldn't access console for device $DEVICE"
       exit 1
@@ -2024,7 +2024,7 @@ function device_console() {
       DEVICE_PORT=$(echo $OUTPUT|jq -r .data.lab.Zombie.DevicePort)
       ZOMBIE_IP=$(echo $OUTPUT|jq -r .data.lab.Zombie.IPAddress)
       if [ "$ZOMBIE_IP" != "" ] && [ "$DEVICE_PORT" != "" ];then
-        sshpass -p "zuser" ssh -t zuser@$ZOMBIE_IP "connect_serial DUT$DEVICE_PORT"
+        sshpass -p "zuser" ssh -o 'StrictHostKeyChecking no' -t zuser@$ZOMBIE_IP "connect_serial DUT$DEVICE_PORT"
       else
         echo "[ERROR] Couldn't access console for device $DEVICE"
         exit 1
