@@ -5,8 +5,10 @@ OPTION2=""
 SERVER_URL=""
 USER_NAME=""
 GPIO_PIN_DATA=""
-VERSION="1.0.2"
+VERSION="1.0.3-dev"
 CURL_ARGS="-s -k --location"
+ERRLOG=/tmp/errlog
+SSL_CERT=0
 
 function check_dependencies() {
 	packageList="jq curl sshpass"
@@ -1079,8 +1081,24 @@ function user_authentication() {
       read -s -p "Provide the EBF User Password >> " PASSWORD
 			echo ""
     fi
+    echo $SERVER_URL|grep -w https > /dev/null
+    if [ $? -eq 0 ];then
+      read -r -p "Do you want to Enable SSL Certificate Verification? [Y/N] " response
+      if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]];then
+        curl -s --verbose $SERVER_URL &> /dev/null
+        if [ $? -ne 0 ];then
+          echo ""
+          echo "[ERROR] SSL certificate is not installed for server \"$SERVER_URL\""
+          exit 1
+        else
+          SSL_CERT=1
+        fi
+      fi
+    fi
+
     if [[ "${USER_NAME}" != "" && "${PASSWORD}" != "" && "${SERVER_URL}" != "" ]];then
-      OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/token/"  --header 'Content-Type: application/json' --data-raw '{"username":"'"$USER_NAME"'" , "password":"'"$PASSWORD"'"}')
+      OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/token/"  --header 'Content-Type: application/json' --data-raw '{"username":"'"$USER_NAME"'" , "password":"'"$PASSWORD"'"}' 2> $ERRLOG)
+      check_expired_ssl_cert
       AUTH_TOKEN=$(echo $OUTPUT|jq -r .data.token)
 			RESULT=$(echo $OUTPUT|jq -r .result)
 			if [ "$RESULT" == "success" ];then
@@ -1088,6 +1106,11 @@ function user_authentication() {
         	echo "token=$AUTH_TOKEN" > ~/.ebfconfig
         	echo "username=$USER_NAME" >> ~/.ebfconfig
         	echo "server=$SERVER_URL" >> ~/.ebfconfig
+          if [ "$SSL_CERT" -eq 1 ];then
+            echo "ssl_cert=yes" >> ~/.ebfconfig
+				  else
+	          echo "ssl_cert=no" >> ~/.ebfconfig
+          fi
         	echo "Successfully logged in as user $USER_NAME"
       	else
         	echo "[ERROR] Invalid EBF-Server URL or Credentials"
@@ -1107,24 +1130,40 @@ function user_authentication() {
     USER_NAME=$(cat ~/.ebfconfig 2> /dev/null |grep "username"|cut -d "=" -f2)
     AUTH_TOKEN=$(cat ~/.ebfconfig 2> /dev/null |grep "token"|cut -d "=" -f2)
     SERVER_URL=$(cat ~/.ebfconfig 2> /dev/null |grep "server"|cut -d "=" -f2-)
+    SSL_CERT=$(cat ~/.ebfconfig 2> /dev/null |grep "ssl_cert"|cut -d "=" -f2-)
 		if [[ "${USER_NAME}" == "" || "${AUTH_TOKEN}" == "" || "${SERVER_URL}" == "" ]];then
 			echo "[Error] Invalid credentials, Please login again"
 			exit 1
+		else
+			if [ "$SSL_CERT" == "yes" ];then
+				CURL_ARGS="-f $SSL_CERT_PATH --location"
+			fi
 		fi
   fi
+}
+
+function check_expired_ssl_cert() {
+	cat $ERRLOG|grep -w "certificate has expired" > /dev/null
+	if [ $? -eq 0 ];then
+		echo "Your SSL certificate has expired for server $SERVER_URL"
+		rm -rf $ERRLOG
+		exit 1
+	fi
 }
 
 function list_config(){
     user_authentication
     echo " UserName:       $USER_NAME"
     echo " BFC-SERVER:     $SERVER_URL"
+    echo " SSL Enabled:    $SSL_CERT"
     echo " BFC AUTH-Token: $AUTH_TOKEN"
 }
 
 function list_devices() {
   user_authentication
   COUNT=0
-  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/"  --header 'Authorization: token '$AUTH_TOKEN'')
+  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	check_expired_ssl_cert
 	RESULT=$(echo $OUTPUT|jq -r .result)
 	device=$(echo $OUTPUT|jq -r .data[$COUNT])
 	if [ "$RESULT" == "success" ];then
@@ -1153,7 +1192,8 @@ function list_devices() {
 function list_resources() {
   user_authentication
   COUNT=0
-  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/resources/"  --header 'Authorization: token '$AUTH_TOKEN'')
+  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/resources/"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	check_expired_ssl_cert
 	RESULT=$(echo $OUTPUT|jq -r .result)
 	resource=$(echo $OUTPUT|jq -r .data[$COUNT])
 	if [ "$RESULT" == "success" ];then
@@ -1177,7 +1217,8 @@ function list_resources() {
 function mydevices() {
   user_authentication
   COUNT=0
-  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/mine/"  --header 'Authorization: token '$AUTH_TOKEN'')
+  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/mine/"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	check_expired_ssl_cert
 	RESULT=$(echo $OUTPUT|jq -r .result)
 	device=$(echo $OUTPUT|jq -r .data[$COUNT])
 	if [ "$RESULT" == "success" ];then
@@ -1206,7 +1247,8 @@ function mydevices() {
 function device_status() {
   user_authentication
   DEVICE=$OPTION
-  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE"  --header 'Authorization: token '$AUTH_TOKEN'')
+  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	check_expired_ssl_cert
 	RESULT=$(echo $OUTPUT|jq -r .result)
 	MESSAGE=$(echo $OUTPUT|jq -r .message)
   ASSIGNED_INFO=$(echo $OUTPUT|jq -r .data.AssignedTo)
@@ -1234,7 +1276,8 @@ function device_status() {
 function device_allocate() {
   user_authentication
   DEVICE=$OPTION
-  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/assign"  --header 'Authorization: token '$AUTH_TOKEN'')
+  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/assign"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	check_expired_ssl_cert
   RESULT=$(echo $OUTPUT|jq -r .result)
   if [ "$RESULT" == "success" ];then
     echo "Device is assigned to user \"$USER_NAME\""
@@ -1258,7 +1301,8 @@ function device_allocate() {
 function device_release() {
   user_authentication
   DEVICE=$OPTION
-  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/release"  --header 'Authorization: token '$AUTH_TOKEN'')
+  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/release"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	check_expired_ssl_cert
   RESULT=$(echo $OUTPUT|jq -r .result)
   if [ "$RESULT" == "success" ];then
     echo "Device \"$DEVICE\" is released and available to use."
@@ -1285,7 +1329,8 @@ function device_release() {
 function device_release_force() {
   user_authentication
   DEVICE=$OPTION
-  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/release/force"  --header 'Authorization: token '$AUTH_TOKEN'')
+  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/release/force"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	check_expired_ssl_cert
   RESULT=$(echo $OUTPUT|jq -r .result)
   if [ "$RESULT" == "success" ];then
 		echo "Device \"$DEVICE\" is Released and available to Use."
@@ -1309,7 +1354,8 @@ function device_release_force() {
 function device_info() {
   user_authentication
   DEVICE=$OPTION
-  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE"  --header 'Authorization: token '$AUTH_TOKEN'')
+  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	check_expired_ssl_cert
   HOSTNAME=$(echo $OUTPUT|jq -r .data.Hostname)
 	RESULT=$(echo $OUTPUT|jq -r .result)
 	if [ "$RESULT" == "success" ];then
@@ -1364,7 +1410,8 @@ function device_info() {
 function power_status() {
   user_authentication
   DEVICE=$OPTION
-  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/power"  --header 'Authorization: token '$AUTH_TOKEN'')
+  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/power"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	check_expired_ssl_cert
   RESULT=$(echo $OUTPUT|jq -r .result)
   STATUS=$(echo $OUTPUT|jq -r .data)
   if [ "$RESULT" == "success" ];then
@@ -1394,7 +1441,8 @@ function power_command() {
   user_authentication
   DEVICE=$OPTION
 	POWER_COMMAND="$OPTION3"
-  OUTPUT=$(curl ${CURL_ARGS} --request PUT "$SERVER_URL/api/v0.2/devices/$DEVICE/power/$POWER_COMMAND"  --header 'Authorization: token '$AUTH_TOKEN'')
+  OUTPUT=$(curl ${CURL_ARGS} --request PUT "$SERVER_URL/api/v0.2/devices/$DEVICE/power/$POWER_COMMAND"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	check_expired_ssl_cert
   RESULT=$(echo $OUTPUT|jq -r .result)
   if [ "$RESULT" == "success" ];then
     echo "Device \"$DEVICE\" is Powered \"$POWER_COMMAND\""
@@ -1424,9 +1472,11 @@ function sdmux_hotplug() {
 	HOTPLUG_PORT=$OPTION3
 	COMMAND=$OPTION4
   if [ "$COMMAND" == "status" ];then
-    OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/hotplug/$HOTPLUG_PORT/"  --header 'Authorization: token '$AUTH_TOKEN'')
+    OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/hotplug/$HOTPLUG_PORT/"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
 	else
-    OUTPUT=$(curl ${CURL_ARGS} --request PUT "$SERVER_URL/api/v0.2/devices/$DEVICE/hotplug/$HOTPLUG_PORT/$COMMAND/"  --header 'Authorization: token '$AUTH_TOKEN'')
+    OUTPUT=$(curl ${CURL_ARGS} --request PUT "$SERVER_URL/api/v0.2/devices/$DEVICE/hotplug/$HOTPLUG_PORT/$COMMAND/"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
   fi
     RESULT=$(echo $OUTPUT|jq -r .result)
     STATUS=$(echo $OUTPUT|jq -r .data)
@@ -1459,7 +1509,8 @@ function sdmux_hotplug() {
 function portfw_list() {
   user_authentication
   DEVICE=$OPTION
-  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/portfw/nat/"  --header 'Authorization: token '$AUTH_TOKEN'')
+  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/portfw/nat/"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	check_expired_ssl_cert
 	COUNT=0
 	RESULT=$(echo $OUTPUT|jq -r .result)
   PORT_LIST=$(echo $OUTPUT|jq -r .data[$COUNT])
@@ -1500,7 +1551,8 @@ function portfw_add() {
 	ZOMBIE_PORT=$OPTION6
 	PROTOCOL=$OPTION7
 	if [ "$OPTION8" == "" ] && [ "$PROTOCOL" != "" ];then
-		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/portfw/nat/"  --header 'Content-Type: application/json' --header 'Authorization: token '$AUTH_TOKEN'' --data-raw '{ "device_ip":"'"$DEVICE_IP"'", "dut_port":"'"$DUT_PORT"'", "zombie_port":"'"$ZOMBIE_PORT"'", "pcol":"'"$PROTOCOL"'" }')
+		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/portfw/nat/"  --header 'Content-Type: application/json' --header 'Authorization: token '$AUTH_TOKEN'' --data-raw '{ "device_ip":"'"$DEVICE_IP"'", "dut_port":"'"$DUT_PORT"'", "zombie_port":"'"$ZOMBIE_PORT"'", "pcol":"'"$PROTOCOL"'" }' 2> $ERRLOG)
+		check_expired_ssl_cert
   	RESULT=$(echo $OUTPUT|jq -r .result)
 	else
 		help_device_portfw_add
@@ -1534,7 +1586,8 @@ function portfw_remove() {
 	ZOMBIE_PORT=$OPTION6
 	PROTOCOL=$OPTION7
 	if [ "$OPTION8" == "" ] && [ "$PROTOCOL" != "" ];then
-		OUTPUT=$(curl ${CURL_ARGS} --request DELETE "$SERVER_URL/api/v0.2/devices/$DEVICE/portfw/nat/"  --header 'Content-Type: application/json' --header 'Authorization: token '$AUTH_TOKEN'' --data-raw '{ "device_ip":"'"$DEVICE_IP"'", "dut_port":"'"$DUT_PORT"'", "zombie_port":"'"$ZOMBIE_PORT"'", "pcol":"'"$PROTOCOL"'" }')
+		OUTPUT=$(curl ${CURL_ARGS} --request DELETE "$SERVER_URL/api/v0.2/devices/$DEVICE/portfw/nat/"  --header 'Content-Type: application/json' --header 'Authorization: token '$AUTH_TOKEN'' --data-raw '{ "device_ip":"'"$DEVICE_IP"'", "dut_port":"'"$DUT_PORT"'", "zombie_port":"'"$ZOMBIE_PORT"'", "pcol":"'"$PROTOCOL"'" }' 2> $ERRLOG)
+		check_expired_ssl_cert
   	RESULT=$(echo $OUTPUT|jq -r .result)
 	else
 		help_device_portfw_remove
@@ -1568,7 +1621,8 @@ function execute_serial_command() {
 		DEVICE_COMMAND=$(jq -aRs . <<< $DEVICE_COMMAND)
 		DEVICE_COMMAND=${DEVICE_COMMAND#\"}
 		DEVICE_COMMAND=${DEVICE_COMMAND%\"}
-		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/run/serial/"  --header 'Content-Type: application/json' --header 'Authorization: token '$AUTH_TOKEN'' --data-raw '{ "command": "'"$DEVICE_COMMAND"'" }')
+		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/run/serial/"  --header 'Content-Type: application/json' --header 'Authorization: token '$AUTH_TOKEN'' --data-raw '{ "command": "'"$DEVICE_COMMAND"'" }' 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		if [ "$RESULT" == "success" ];then
 			DATA=$(echo $OUTPUT|jq -r .data[])
@@ -1613,7 +1667,8 @@ function serial_download() {
 		DST_FILE_PATH="$DST_FILE_PATH"
 	fi
   if [ "$SRC_FILE_PATH" != "" ];then
-    OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/download/serial?compress=true&path=$SRC_FILE_PATH" --header 'Authorization: token '$AUTH_TOKEN'' --output ${TMP_DIR}/$FILE_NAME.tar.gz )
+    OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/download/serial?compress=true&path=$SRC_FILE_PATH" --header 'Authorization: token '$AUTH_TOKEN'' --output ${TMP_DIR}/$FILE_NAME.tar.gz 2> $ERRLOG)
+		check_expired_ssl_cert
 		tar -xf ${TMP_DIR}/$FILE_NAME.tar.gz -C ${TMP_DIR} 2>/dev/null && cp -rf ${TMP_DIR}${SRC_FILE_DIR}/* $DST_FILE_PATH 2>/dev/null
 		if [ $? -eq 0 ];then
 			echo "Successfully Downloaded \"$FILE_NAME\" into \"$DST_FILE_PATH\""
@@ -1640,9 +1695,11 @@ function serial_upload() {
 	FILE_PERMISSIONS=${OPTION6}
   if [ -f $SRC_FILE_PATH ];then
 		if [ "$FILE_PERMISSIONS" != "" ];then
-			OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/upload/serial/" --header 'Authorization: token '$AUTH_TOKEN'' --form 'file=@'$SRC_FILE_PATH'' --form 'path='$DST_FILE_PATH'' --form 'permission='$FILE_PERMISSIONS'' )
+			OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/upload/serial/" --header 'Authorization: token '$AUTH_TOKEN'' --form 'file=@'$SRC_FILE_PATH'' --form 'path='$DST_FILE_PATH'' --form 'permission='$FILE_PERMISSIONS'' 2> $ERRLOG )
+			check_expired_ssl_cert
 		else
-			OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/upload/serial/" --header 'Authorization: token '$AUTH_TOKEN'' --form 'file=@'$SRC_FILE_PATH'' --form 'path='$DST_FILE_PATH'' )
+			OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/upload/serial/" --header 'Authorization: token '$AUTH_TOKEN'' --form 'file=@'$SRC_FILE_PATH'' --form 'path='$DST_FILE_PATH'' 2> $ERRLOG)
+			check_expired_ssl_cert
 		fi
 	elif [ -d $SRC_FILE_PATH ];then
 		TMP_DIR=$(mktemp -d)
@@ -1651,7 +1708,8 @@ function serial_upload() {
 		DIR_PATH=${SRC_FILE_PATH%/*}
 	  DIR_NAME=${SRC_FILE_PATH##*/}
 		tar -czf $TMP_DIR/$DIR_NAME.tar.gz -C $DIR_PATH $DIR_NAME
-		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/upload/serial/" --header 'Authorization: token '$AUTH_TOKEN'' --form 'file=@'$TMP_DIR/$DIR_NAME.tar.gz'' --form 'path='$DST_FILE_PATH'' --form 'extract=true' )
+		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/upload/serial/" --header 'Authorization: token '$AUTH_TOKEN'' --form 'file=@'$TMP_DIR/$DIR_NAME.tar.gz'' --form 'path='$DST_FILE_PATH'' --form 'extract=true' 2> $ERRLOG)
+		check_expired_ssl_cert
 		rm -rf $TMP_DIR
 	else
 		help_device_serial_upload
@@ -1681,7 +1739,8 @@ function ssh_import_key() {
 	DEVICE_USERNAME=$OPTION5
 	DEVICE_PASSWORD=$OPTION6
 	JSON_STRING="--form device_ip=$DEVICE_IP --form username=$DEVICE_USERNAME --form password=$DEVICE_PASSWORD"
-	OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/import/key/ssh/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING )
+	OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/import/key/ssh/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING 2> $ERRLOG)
+	check_expired_ssl_cert
 	RESULT=$(echo $OUTPUT|jq -r .result)
 	MESSAGE=$(echo $OUTPUT|jq -r .message)
 	if [ "$RESULT" == "success" ];then
@@ -1726,7 +1785,8 @@ function execute_ssh_command() {
 			help_device_ssh_import_key
 			exit 1
 		fi
-		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/run/ssh/"  --header 'Content-Type: application/json' --header 'Authorization: token '$AUTH_TOKEN'' --data-raw '{ "command": "'"$DEVICE_COMMAND"'", "device_ip":"'"$DEVICE_IP"'", "username":"'"$DEVICE_USERNAME"'" }')
+		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/run/ssh/"  --header 'Content-Type: application/json' --header 'Authorization: token '$AUTH_TOKEN'' --data-raw '{ "command": "'"$DEVICE_COMMAND"'", "device_ip":"'"$DEVICE_IP"'", "username":"'"$DEVICE_USERNAME"'" }' 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		RETURN_CODE=$(echo $OUTPUT|jq -r .data.return_code)
     if [ "$RESULT" == "success" ];then
@@ -1786,7 +1846,8 @@ function ssh_download() {
 		DST_FILE_PATH="$DST_FILE_PATH"
 	fi
   if [ "$SRC_FILE_PATH" != "" ];then
-		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/download/ssh?compress=true&path=$SRC_FILE_PATH&device_ip=$DEVICE_IP&username=$DEVICE_USERNAME" --header 'Authorization: token '$AUTH_TOKEN'' --output ${TMP_DIR}/$FILE_NAME.tar.gz )
+		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/download/ssh?compress=true&path=$SRC_FILE_PATH&device_ip=$DEVICE_IP&username=$DEVICE_USERNAME" --header 'Authorization: token '$AUTH_TOKEN'' --output ${TMP_DIR}/$FILE_NAME.tar.gz 2> $ERRLOG)
+		check_expired_ssl_cert
 		tar -xf ${TMP_DIR}/$FILE_NAME.tar.gz -C ${TMP_DIR} 2>/dev/null && rm -rf ${TMP_DIR}/$FILE_NAME.tar.gz && cp -rf ${TMP_DIR}${SRC_FILE_DIR}/* $DST_FILE_PATH 2>/dev/null
 		if [ $? -eq 0 ];then
 			echo "Successfully Downloaded \"$FILE_NAME\" into \"$DST_FILE_PATH\""
@@ -1825,10 +1886,12 @@ function ssh_upload() {
 	  fi
 		if [ "$FILE_PERMISSIONS" != "" ];then
 			JSON_STRING="--form file=@$SRC_FILE_PATH --form path=$DST_FILE_PATH --form device_ip=$DEVICE_IP --form username=$DEVICE_USERNAME --form permission=$FILE_PERMISSIONS"
-			OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/upload/ssh/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING )
+			OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/upload/ssh/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING 2> $ERRLOG)
+			check_expired_ssl_cert
 		else
 			JSON_STRING="--form file=@$SRC_FILE_PATH --form path=$DST_FILE_PATH --form device_ip=$DEVICE_IP --form username=$DEVICE_USERNAME"
-			OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/upload/ssh/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING )
+			OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/upload/ssh/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING 2> $ERRLOG)
+			check_expired_ssl_cert
 		fi
 	elif [ -d $SRC_FILE_PATH ];then
 		TMP_DIR=$(mktemp -d)
@@ -1838,7 +1901,8 @@ function ssh_upload() {
 	  DIR_NAME=${SRC_FILE_PATH##*/}
 		tar -czf $TMP_DIR/$DIR_NAME.tar.gz -C $DIR_PATH $DIR_NAME
 		JSON_STRING="--form file=@$TMP_DIR/$DIR_NAME.tar.gz --form path=$DST_FILE_PATH --form device_ip=$DEVICE_IP --form username=$DEVICE_USERNAME --form extract=true )"
-		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/upload/ssh/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING )
+		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/upload/ssh/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING 2> $ERRLOG)
+		check_expired_ssl_cert
 		rm -rf $TMP_DIR
 	else
 		help_device_ssh_upload
@@ -1867,7 +1931,7 @@ function device_gpio() {
   GPIO_DATA=$OPTION5
   if [ "$COMMAND" == "set_mode" ] || [ "$COMMAND" == "write" ] || [ "$COMMAND" == "read" ] || [ "$COMMAND" == "get_mode" ];then
     if [[ "$GPIO_PATTERN" =~ ^[0-9]+$ ]] && [ "$GPIO_PATTERN" -ge 1 ] && [ "$GPIO_PATTERN" -le 8 ]; then
-      echo ""
+      echo ""|tr -d '\n'
     else
       echo "[ERROR]: Invalid GPIO Pattern"
       help_device_gpio
@@ -1875,7 +1939,7 @@ function device_gpio() {
     fi
   else
     if [[ "$GPIO_PATTERN" =~ ^[0-9]+$ ]] && [ "$GPIO_PATTERN" -ge 1 ] && [ "$GPIO_PATTERN" -le 255 ]; then
-      echo " "
+      echo ""|tr -d '\n'
     else
       echo "[ERROR]: Invalid GPIO Pattern"
       help_device_gpio
@@ -1886,7 +1950,7 @@ function device_gpio() {
   if [ "$GPIO_PIN_DATA" == "yes" ];then
     if [ "$COMMAND" == "set_mode" ];then
       if [ "$GPIO_DATA" == "read" ] || [ "$GPIO_DATA" == "write" ];then
-        echo " "
+        echo ""|tr -d '\n'
       else
         echo "[ERROR]: Invalid GPIO data"
         help_device_gpio
@@ -1894,7 +1958,7 @@ function device_gpio() {
       fi
     elif [ "$COMMAND" == "write" ];then
       if [[ "$GPIO_DATA" =~ ^[0-9]+$ ]] && [ "$GPIO_DATA" -ge 0 ] && [ "$GPIO_DATA" -le 1 ]; then
-        echo " "
+        echo ""|tr -d '\n'
       else
         echo "[ERROR]: Invalid GPIO DATA"
         help_device_gpio
@@ -1902,7 +1966,7 @@ function device_gpio() {
       fi
     else
       if [[ "$GPIO_DATA" =~ ^[0-9]+$ ]] && [ "$GPIO_DATA" -ge 0 ] && [ "$GPIO_DATA" -le 255 ]; then
-        echo " "
+        echo ""|tr -d '\n'
       else
         echo "[ERROR]: Invalid GPIO DATA"
         help_device_gpio
@@ -1912,9 +1976,10 @@ function device_gpio() {
   fi
   user_authentication
   DEVICE=$OPTION
-  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/gpio/$COMMAND/$GPIO_PATTERN/$GPIO_DATA"  --header 'Authorization: token '$AUTH_TOKEN'')
+  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/$DEVICE/gpio/$COMMAND/$GPIO_PATTERN/$GPIO_DATA"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	check_expired_ssl_cert
 	RESULT=$(echo $OUTPUT|jq -r .result)
-	STATUS=$(echo $OUTPUT|jq -r .status)
+	STATUS=$(echo $OUTPUT|jq -r .data)
   if [ "$RESULT" == "success" ];then
     echo " $STATUS"
 	else
@@ -1933,28 +1998,33 @@ function device_gpio() {
 function device_console() {
   user_authentication
   DEVICE=$OPTION
-  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/console/serial/isactive/"  --header 'Authorization: token '$AUTH_TOKEN'')
+  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/console/serial/isactive/"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	check_expired_ssl_cert
 	ISACTIVE=$(echo $OUTPUT|jq -r .data.isActive)
   if [ "$ISACTIVE" == "true" ];then
-    OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE"  --header 'Authorization: token '$AUTH_TOKEN'')
+    OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
     DEVICE_PORT=$(echo $OUTPUT|jq -r .data.lab.Zombie.DevicePort)
     ZOMBIE_IP=$(echo $OUTPUT|jq -r .data.lab.Zombie.IPAddress)
     if [ "$ZOMBIE_IP" != "" ] && [ "$DEVICE_PORT" != "" ];then
-      sshpass -p "zuser" ssh -t zuser@$ZOMBIE_IP "connect_serial DUT$DEVICE_PORT"
+      sshpass -p "zuser" ssh -o 'StrictHostKeyChecking no' -t zuser@$ZOMBIE_IP "connect_serial DUT$DEVICE_PORT"
     else
       echo "[ERROR] Couldn't access console for device $DEVICE"
       exit 1
     fi
   else
-    OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/console/serial/restart/"  --header 'Authorization: token '$AUTH_TOKEN'')
-    OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/console/serial/isactive/"  --header 'Authorization: token '$AUTH_TOKEN'')
+    OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/console/serial/restart/"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
+    OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/console/serial/isactive/"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
     ISACTIVE=$(echo $OUTPUT|jq -r .data.isActive)
     if [ "$ISACTIVE" == "true" ];then
-      OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE"  --header 'Authorization: token '$AUTH_TOKEN'')
+      OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+			check_expired_ssl_cert
       DEVICE_PORT=$(echo $OUTPUT|jq -r .data.lab.Zombie.DevicePort)
       ZOMBIE_IP=$(echo $OUTPUT|jq -r .data.lab.Zombie.IPAddress)
       if [ "$ZOMBIE_IP" != "" ] && [ "$DEVICE_PORT" != "" ];then
-        sshpass -p "zuser" ssh -t zuser@$ZOMBIE_IP "connect_serial DUT$DEVICE_PORT"
+        sshpass -p "zuser" ssh -o 'StrictHostKeyChecking no' -t zuser@$ZOMBIE_IP "connect_serial DUT$DEVICE_PORT"
       else
         echo "[ERROR] Couldn't access console for device $DEVICE"
         exit 1
@@ -1977,7 +2047,8 @@ function list_labcontrollers() {
   user_authentication
   DEVICE=$OPTION
 	COUNT=0
-  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/labcontrollers/"  --header 'Authorization: token '$AUTH_TOKEN'')
+  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/labcontrollers/"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	check_expired_ssl_cert
   RESULT=$(echo $OUTPUT|jq -r .result)
 	CONTROLLERS_LIST=$(echo $OUTPUT|jq -r .data[$COUNT])
   if [ "$RESULT" == "success" ] && [ $"CONTROLLERS_LIST" != "null" ];then
@@ -2014,9 +2085,11 @@ function list_netboot_directory() {
 	DIR_PATH_OPTIONAL=$OPTION4
 	COUNT=0
 	if [ "$DIR_PATH_OPTIONAL" != "" ];then
-		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/fmanager/dir/$DIR_PATH_OPTIONAL"  --header 'Authorization: token '$AUTH_TOKEN'')
+		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/fmanager/dir/$DIR_PATH_OPTIONAL"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
 	else
-		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/fmanager/"  --header 'Authorization: token '$AUTH_TOKEN'')
+		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/fmanager/"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
 	fi
 	RESULT=$(echo $OUTPUT|jq -r .result)
 	LIST_DATA=$(echo $OUTPUT|jq -r .data[$COUNT])
@@ -2057,7 +2130,8 @@ function mkdir_netboot_directory() {
 	DEVICE=$OPTION
 	DIR_PATH=$OPTION4
 	if [ `expr "$DIR_PATH" : ".*[A-Za-z0-9.()~!@$^&+={};-].*"` -gt 0 ]; then
-		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/fmanager/dir/$DIR_PATH/"  --header 'Authorization: token '$AUTH_TOKEN'')
+		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/fmanager/dir/$DIR_PATH/"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
 	else
     echo "[ERROR] Directory Name contains special characters"
 		exit 1
@@ -2086,7 +2160,8 @@ function delete_netboot_directory() {
 	user_authentication
 	DEVICE=$OPTION
 	DIR_PATH=$OPTION4
-	OUTPUT=$(curl ${CURL_ARGS} --request DELETE "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/fmanager/dir/$DIR_PATH"  --header 'Authorization: token '$AUTH_TOKEN'')
+	OUTPUT=$(curl ${CURL_ARGS} --request DELETE "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/fmanager/dir/$DIR_PATH"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	check_expired_ssl_cert
 	RESULT=$(echo $OUTPUT|jq -r .result)
 	MESSAGE=$(echo $OUTPUT|jq -r .message)
 	if [ "$RESULT" == "success" ];then
@@ -2183,7 +2258,8 @@ function netboot_transfer() {
 		if [ "$CMD_ARGS" != "" ];then
 			JSON_STRING="${JSON_STRING}  --form cmd_args=${CMD_ARGS}"
 		fi
-		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/transfer/file/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING )
+		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/transfer/file/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		if [ "$RESULT" == "success" ];then
 			JOB_ID=$(echo $OUTPUT|jq -r .data.job_id)
@@ -2226,7 +2302,8 @@ function netboot_transfer() {
 		if [ "$CMD_ARGS" != "" ];then
 			JSON_STRING="${JSON_STRING},\"cmd_args\":\"${CMD_ARGS}\""
 		fi
-		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/transfer/file/" --header 'Authorization: token '$AUTH_TOKEN'' --header 'Content-Type: application/json' --data-raw '{'$JSON_STRING'}' )
+		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/transfer/file/" --header 'Authorization: token '$AUTH_TOKEN'' --header 'Content-Type: application/json' --data-raw '{'$JSON_STRING'}' 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		if [ "$RESULT" == "success" ];then
 			JOB_ID=$(echo $OUTPUT|jq -r .data.job_id)
@@ -2248,7 +2325,8 @@ function netboot_transfer() {
 			exit 1
 		fi
 	elif [ "$OPERATION" == "status" ] && [ "$NETBOOT_JOB_ID" != "" ];then
-		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/transfer/file/status/$NETBOOT_JOB_ID" --header 'Authorization: token '$AUTH_TOKEN'' )
+		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/transfer/file/status/$NETBOOT_JOB_ID" --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		JOB_STATUS=$(echo $OUTPUT|jq -r .data.status)
 		if [ "$RESULT" == "success" ];then
@@ -2281,7 +2359,8 @@ function netboot_transfer() {
 			exit 1
 		fi
 	elif [ "$OPERATION" == "status" ] && [ "$NETBOOT_JOB_ID" == "" ];then
-		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/queue/" --header 'Authorization: token '$AUTH_TOKEN'' )
+		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/queue/" --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		SCHEDULED_JOB_ID=$(echo $OUTPUT|jq .data.queue_info.scheduled_jobs|jq 'keys[0]')
 		CURRENT_JOB_ID=$(echo $OUTPUT|jq .data.queue_info.current_jobs|jq 'keys[0]')
@@ -2319,7 +2398,8 @@ function netboot_transfer() {
 			exit 1
 		fi
 	elif [ "$OPERATION" == "remove" ] && [ "$NETBOOT_JOB_ID" != "" ];then
-		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/transfercancel/$NETBOOT_JOB_ID" --header 'Authorization: token '$AUTH_TOKEN'' )
+		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/transfercancel/$NETBOOT_JOB_ID" --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		if [ "$RESULT" == "success" ];then
 			echo "Successfully canceled Network Boot Upload : $NETBOOT_JOB_ID"
@@ -2367,7 +2447,8 @@ function netboot_download() {
 	fi
 
   if [ "$SRC_FILE_PATH" != "" ];then
-    OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/fmanager/download/$SRC_FILE_PATH/" --header 'Authorization: token '$AUTH_TOKEN'' --output $FILE_NAME )
+    OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/fmanager/download/$SRC_FILE_PATH/" --header 'Authorization: token '$AUTH_TOKEN'' --output $FILE_NAME 2> $ERRLOG)
+		check_expired_ssl_cert
 		if [ $? -eq 0 ];then
 			echo "Successfully Downloaded \"$SRC_FILE_PATH\" into \"$FILE_NAME\""
 		else
@@ -2390,7 +2471,8 @@ function netboot_upload() {
 	JSON_STRING=""
 	if [ -f $SRC_FILE_PATH ] && [ "$DST_FILE_PATH" != "" ];then
 		JSON_STRING="--form file=@$SRC_FILE_PATH --form path_to_upload_file=$DST_FILE_PATH"
-		OUTPUT=$(curl ${CURL_ARGS} --request PUT "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/fmanager/dir/$DST_FILE_PATH/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING )
+		OUTPUT=$(curl ${CURL_ARGS} --request PUT "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/fmanager/dir/$DST_FILE_PATH/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		MESSAGE=$(echo $OUTPUT|jq -r .message)
 		if [ "$RESULT" == "success" ];then
@@ -2423,7 +2505,8 @@ function netboot_symlink() {
 	DEVICE=$OPTION
 	CREATE_SYMLINK_DIR=$OPTION4
 	if [ "$CREATE_SYMLINK_DIR" == "" ];then
-		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/fsroot/symlink/" --header 'Authorization: token '$AUTH_TOKEN'' )
+		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/fsroot/symlink/" --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		if [ "$RESULT" == "success" ];then
 			SYMLINK_DIR=$(echo $OUTPUT|jq -r .data)
@@ -2443,7 +2526,8 @@ function netboot_symlink() {
 			exit 1
 		fi
 	else
-		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/fsroot/symlink/" --header 'Authorization: token '$AUTH_TOKEN'' --header 'Content-Type: application/json' --data-raw '{ "symlink_dir":"'"$CREATE_SYMLINK_DIR"'" }')
+		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/netboot/fsroot/symlink/" --header 'Authorization: token '$AUTH_TOKEN'' --header 'Content-Type: application/json' --data-raw '{ "symlink_dir":"'"$CREATE_SYMLINK_DIR"'" }' 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		if [ "$RESULT" == "success" ];then
 			echo "Successfully created symlink to directory $CREATE_SYMLINK_DIR"
@@ -2468,7 +2552,8 @@ function sdcard_info(){
 	user_authentication
 	DEVICE=$OPTION
 	COUNT=0
-	OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/info/"  --header 'Authorization: token '$AUTH_TOKEN'' )
+	OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/info/"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	check_expired_ssl_cert
 	RESULT=$(echo $OUTPUT|jq -r .result)
 	PARTITIONS_DATA=$(echo $OUTPUT|jq -r .data.partitions)
 	if [ "$RESULT" == "success" ] && [ "$PARTITIONS_DATA" != "null" ];then
@@ -2514,9 +2599,11 @@ function sdcard_side(){
 	DEVICE=$OPTION
 	COUNT=0
 	if [ "$OPTION2" == "usb" ];then
-		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/usbmux/"  --header 'Authorization: token '$AUTH_TOKEN'' )
+		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/usbmux/"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
 	else
-		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdmux/"  --header 'Authorization: token '$AUTH_TOKEN'' )
+		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdmux/"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
 	fi
 	RESULT=$(echo $OUTPUT|jq -r .result)
 	DATA=$(echo $OUTPUT|jq -r .data)
@@ -2556,9 +2643,11 @@ function sdcard_switch(){
 	fi
 
 	if [ "$SWITCH_SIDE" == "side" ];then
-		OUTPUT=$(curl ${CURL_ARGS} --request PUT "$SERVER_URL/api/v0.2/devices/$DEVICE/$MUX_MODE/switch/"  --header 'Authorization: token '$AUTH_TOKEN'' )
+		OUTPUT=$(curl ${CURL_ARGS} --request PUT "$SERVER_URL/api/v0.2/devices/$DEVICE/$MUX_MODE/switch/"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
 	else
-		OUTPUT=$(curl ${CURL_ARGS} --request PUT "$SERVER_URL/api/v0.2/devices/$DEVICE/$MUX_MODE/switch/$SWITCH_SIDE/"  --header 'Authorization: token '$AUTH_TOKEN'' )
+		OUTPUT=$(curl ${CURL_ARGS} --request PUT "$SERVER_URL/api/v0.2/devices/$DEVICE/$MUX_MODE/switch/$SWITCH_SIDE/"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
 	fi
 	RESULT=$(echo $OUTPUT|jq -r .result)
 	DATA=$(echo $OUTPUT|jq -r .data)
@@ -2586,9 +2675,11 @@ function list_sdcard_directory() {
 	DIR_PATH_OPTIONAL=$OPTION4
 	COUNT=0
 	if [ "$DIR_PATH_OPTIONAL" != "" ];then
-		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/fmanager/dir/$DIR_PATH_OPTIONAL"  --header 'Authorization: token '$AUTH_TOKEN'')
+		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/fmanager/dir/$DIR_PATH_OPTIONAL"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
 	else
-		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/fmanager/"  --header 'Authorization: token '$AUTH_TOKEN'')
+		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/fmanager/"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
 	fi
 	RESULT=$(echo $OUTPUT|jq -r .result)
 	LIST_DATA=$(echo $OUTPUT|jq -r .data[$COUNT])
@@ -2628,7 +2719,8 @@ function mkdir_sdcard_directory() {
 	user_authentication
 	DEVICE=$OPTION
 	DIR_PATH=$OPTION4
-	SDCARD_INFO=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/info/"  --header 'Authorization: token '$AUTH_TOKEN'' )
+	SDCARD_INFO=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/info/"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	check_expired_ssl_cert
 	PARTIIONS=$(echo $SDCARD_INFO|jq -r '.data."partitions"[].dev')
 	REQUESTED_PARTITION_NAME=$(echo ${DIR_PATH#/*}|cut -d '/' -f1)
 	if [[ ! "${PARTIIONS[@]}" =~ "${REQUESTED_PARTITION_NAME}" ]]; then
@@ -2665,7 +2757,8 @@ function delete_sdcard_directory() {
 	user_authentication
 	DEVICE=$OPTION
 	DIR_PATH=$OPTION4
-	OUTPUT=$(curl ${CURL_ARGS} --request DELETE "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/fmanager/dir/$DIR_PATH"  --header 'Authorization: token '$AUTH_TOKEN'')
+	OUTPUT=$(curl ${CURL_ARGS} --request DELETE "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/fmanager/dir/$DIR_PATH"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	check_expired_ssl_cert
 	RESULT=$(echo $OUTPUT|jq -r .result)
 	MESSAGE=$(echo $OUTPUT|jq -r .message)
 	if [ "$RESULT" == "success" ];then
@@ -2712,7 +2805,8 @@ function format_sdcard() {
 	done
 
 	if [ "$JSON_STRING" != "" ];then
-		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/format/"  --header 'Authorization: token '$AUTH_TOKEN'' --header 'Content-Type: application/json' --data-raw '{ "format": [ '$JSON_STRING' ] }' )
+		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/format/"  --header 'Authorization: token '$AUTH_TOKEN'' --header 'Content-Type: application/json' --data-raw '{ "format": [ '$JSON_STRING' ] }' 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		if [ "$RESULT" == "success" ];then
 				echo "Successfully format the partitions"
@@ -2769,9 +2863,11 @@ function partition_sdcard() {
 	if [ "$JSON_STRING" != "" ];then
 		if [ "$BOOTABLE" != "" ] && [ "$BOOTABLE" == "true" ];then
 			JSON_STRING_BOOTABLE="\"bootable\":\"True\""
-			OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/partition/"  --header 'Authorization: token '$AUTH_TOKEN'' --header 'Content-Type: application/json' --data-raw '{ "partitions": [ '$JSON_STRING' ], '$JSON_STRING_BOOTABLE' }' )
+			OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/partition/"  --header 'Authorization: token '$AUTH_TOKEN'' --header 'Content-Type: application/json' --data-raw '{ "partitions": [ '$JSON_STRING' ], '$JSON_STRING_BOOTABLE' }' 2> $ERRLOG)
+			check_expired_ssl_cert
 		else
-			OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/partition/"  --header 'Authorization: token '$AUTH_TOKEN'' --header 'Content-Type: application/json' --data-raw '{ "partitions": [ '$JSON_STRING' ] }' )
+			OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/partition/"  --header 'Authorization: token '$AUTH_TOKEN'' --header 'Content-Type: application/json' --data-raw '{ "partitions": [ '$JSON_STRING' ] }' 2> $ERRLOG)
+			check_expired_ssl_cert
 		fi
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		if [ "$RESULT" == "success" ];then
@@ -2801,7 +2897,8 @@ function sdcard_backup() {
 	BACKUP_JOB_ID=$OPTION5
 	COUNT=0
 	if [ "$OPERATION" == "" ] && [ "$BACKUP_JOB_ID" == "" ];then
-		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/backup/" --header 'Authorization: token '$AUTH_TOKEN'' )
+		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/backup/" --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		if [ "$RESULT" == "success" ];then
 			JOB_ID=$(echo $OUTPUT|jq -r .data.job_id)
@@ -2823,7 +2920,8 @@ function sdcard_backup() {
 			exit 1
 		fi
 	elif [ "$OPERATION" == "status" ] && [ "$BACKUP_JOB_ID" != "" ];then
-		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/backup/status/$BACKUP_JOB_ID" --header 'Authorization: token '$AUTH_TOKEN'' )
+		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/backup/status/$BACKUP_JOB_ID" --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		JOB_STATUS=$(echo $OUTPUT|jq -r .data.status)
 		if [ "$RESULT" == "success" ];then
@@ -2856,7 +2954,8 @@ function sdcard_backup() {
 			exit 1
 		fi
 	elif [ "$OPERATION" == "status" ] && [ "$BACKUP_JOB_ID" == "" ];then
-		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/backupqueue/" --header 'Authorization: token '$AUTH_TOKEN'' )
+		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/backupqueue/" --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		SCHEDULED_JOB_ID=$(echo $OUTPUT|jq .data.queue_info.scheduled_jobs|jq 'keys[0]')
 		CURRENT_JOB_ID=$(echo $OUTPUT|jq .data.queue_info.current_jobs|jq 'keys[0]')
@@ -2895,7 +2994,8 @@ function sdcard_backup() {
 			exit 1
 		fi
 	elif [ "$OPERATION" == "remove" ] && [ "$BACKUP_JOB_ID" != "" ];then
-		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/backupcancel/$BACKUP_JOB_ID" --header 'Authorization: token '$AUTH_TOKEN'' )
+		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/backupcancel/$BACKUP_JOB_ID" --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		if [ "$RESULT" == "success" ];then
 			echo "Successfully canceled backup for Backup-Job-ID : $BACKUP_JOB_ID"
@@ -3020,7 +3120,8 @@ function sdcard_flash() {
 		if [ "$BMAP_FILE" != "" ];then
 			JSON_STRING="${JSON_STRING}  --form  bmap_file=@${BMAP_FILE}"
 		fi
-		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/flash/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING )
+		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/flash/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		if [ "$RESULT" == "success" ];then
 			JOB_ID=$(echo $OUTPUT|jq -r .data.job_id)
@@ -3066,7 +3167,8 @@ function sdcard_flash() {
 		if [ "$BMAP_FILE" != "" ];then
 			JSON_STRING="${JSON_STRING},\"bmap_file\":\"${BMAP_FILE}\""
 		fi
-		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/flash/" --header 'Authorization: token '$AUTH_TOKEN'' --header 'Content-Type: application/json' --data-raw '{'$JSON_STRING'}' )
+		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/flash/" --header 'Authorization: token '$AUTH_TOKEN'' --header 'Content-Type: application/json' --data-raw '{'$JSON_STRING'}' 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		if [ "$RESULT" == "success" ];then
 			JOB_ID=$(echo $OUTPUT|jq -r .data.job_id)
@@ -3088,7 +3190,8 @@ function sdcard_flash() {
 			exit 1
 		fi
 	elif [ "$OPERATION" == "status" ] && [ "$SDCARD_JOB_ID" != "" ];then
-		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/flash/status/$SDCARD_JOB_ID" --header 'Authorization: token '$AUTH_TOKEN'' )
+		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/flash/status/$SDCARD_JOB_ID" --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		JOB_STATUS=$(echo $OUTPUT|jq -r .data.status)
 		if [ "$RESULT" == "success" ];then
@@ -3121,7 +3224,8 @@ function sdcard_flash() {
 			exit 1
 		fi
 	elif [ "$OPERATION" == "status" ] && [ "$SDCARD_JOB_ID" == "" ];then
-		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/queue/" --header 'Authorization: token '$AUTH_TOKEN'' )
+		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/queue/" --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		SCHEDULED_JOB_ID=$(echo $OUTPUT|jq .data.queue_info.scheduled_jobs|jq 'keys[0]')
 		CURRENT_JOB_ID=$(echo $OUTPUT|jq .data.queue_info.current_jobs|jq 'keys[0]')
@@ -3159,7 +3263,8 @@ function sdcard_flash() {
 			exit 1
 		fi
 	elif [ "$OPERATION" == "remove" ] && [ "$SDCARD_JOB_ID" != "" ];then
-		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/flashcancel/$SDCARD_JOB_ID" --header 'Authorization: token '$AUTH_TOKEN'' )
+		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/flashcancel/$SDCARD_JOB_ID" --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		if [ "$RESULT" == "success" ];then
 			echo "Successfully canceled SDcard Flash Job : $SDCARD_JOB_ID"
@@ -3214,7 +3319,8 @@ function sdcard_download() {
 	fi
 
   if [ "$SRC_FILE_PATH" != "" ];then
-    OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/fmanager/download/$SRC_FILE_PATH/" --header 'Authorization: token '$AUTH_TOKEN'' --output $FILE_NAME )
+    OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/fmanager/download/$SRC_FILE_PATH/" --header 'Authorization: token '$AUTH_TOKEN'' --output $FILE_NAME 2> $ERRLOG)
+		check_expired_ssl_cert
 		if [ $? -eq 0 ];then
 			echo "Successfully Downloaded \"$SRC_FILE_PATH\" into \"$FILE_NAME\""
 		else
@@ -3237,7 +3343,8 @@ function sdcard_upload() {
 	JSON_STRING=""
 	if [ -f $SRC_FILE_PATH ] && [ "$DST_FILE_PATH" != "" ];then
 		JSON_STRING="--form file=@$SRC_FILE_PATH --form path_to_upload_file=$DST_FILE_PATH"
-		OUTPUT=$(curl ${CURL_ARGS} --request PUT "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/fmanager/dir/$DST_FILE_PATH/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING )
+		OUTPUT=$(curl ${CURL_ARGS} --request PUT "$SERVER_URL/api/v0.2/devices/$DEVICE/sdcard/fmanager/dir/$DST_FILE_PATH/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		MESSAGE=$(echo $OUTPUT|jq -r .message)
 		if [ "$RESULT" == "success" ];then
@@ -3362,7 +3469,8 @@ function usb_flash() {
 		if [ "$BMAP_FILE" != "" ];then
 			JSON_STRING="${JSON_STRING}  --form  bmap_file=@${BMAP_FILE}"
 		fi
-		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/usb/flash/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING )
+		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/usb/flash/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		if [ "$RESULT" == "success" ];then
 			JOB_ID=$(echo $OUTPUT|jq -r .data.job_id)
@@ -3408,7 +3516,8 @@ function usb_flash() {
 		if [ "$BMAP_FILE" != "" ];then
 			JSON_STRING="${JSON_STRING},\"bmap_file\":\"${BMAP_FILE}\""
 		fi
-		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/usb/flash/" --header 'Authorization: token '$AUTH_TOKEN'' --header 'Content-Type: application/json' --data-raw '{'$JSON_STRING'}' )
+		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/usb/flash/" --header 'Authorization: token '$AUTH_TOKEN'' --header 'Content-Type: application/json' --data-raw '{'$JSON_STRING'}' 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		if [ "$RESULT" == "success" ];then
 			JOB_ID=$(echo $OUTPUT|jq -r .data.job_id)
@@ -3430,7 +3539,8 @@ function usb_flash() {
 			exit 1
 		fi
 	elif [ "$OPERATION" == "status" ] && [ "$USB_JOB_ID" != "" ];then
-		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/usb/flash/status/$USB_JOB_ID" --header 'Authorization: token '$AUTH_TOKEN'' )
+		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/usb/flash/status/$USB_JOB_ID" --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		JOB_STATUS=$(echo $OUTPUT|jq -r .data.status)
 		if [ "$RESULT" == "success" ];then
@@ -3463,7 +3573,8 @@ function usb_flash() {
 			exit 1
 		fi
 	elif [ "$OPERATION" == "status" ] && [ "$USB_JOB_ID" == "" ];then
-		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/usb/queue/" --header 'Authorization: token '$AUTH_TOKEN'' )
+		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/usb/queue/" --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		SCHEDULED_JOB_ID=$(echo $OUTPUT|jq .data.queue_info.scheduled_jobs|jq 'keys[0]')
 		CURRENT_JOB_ID=$(echo $OUTPUT|jq .data.queue_info.current_jobs|jq 'keys[0]')
@@ -3501,7 +3612,8 @@ function usb_flash() {
 			exit 1
 		fi
 	elif [ "$OPERATION" == "remove" ] && [ "$USB_JOB_ID" != "" ];then
-		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/usb/flashcancel/$USB_JOB_ID" --header 'Authorization: token '$AUTH_TOKEN'' )
+		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/usb/flashcancel/$USB_JOB_ID" --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		if [ "$RESULT" == "success" ];then
 			echo "Successfully canceled USB Flash Job : $USB_JOB_ID"
@@ -3538,7 +3650,8 @@ function list_fmanager_directory() {
 	user_authentication
 	DIR_PATH_OPTIONAL=$OPTION3
 	COUNT=0
-	OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/ebf/$DIR_PATH_OPTIONAL"  --header 'Authorization: token '$AUTH_TOKEN'')
+	OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/ebf/$DIR_PATH_OPTIONAL"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	check_expired_ssl_cert
 	RESULT=$(echo $OUTPUT|jq -r .result)
 	LIST_DATA=$(echo $OUTPUT|jq -r .data[$COUNT])
 	if [ "$RESULT" == "success" ] && [ "$LIST_DATA" != "null" ];then
@@ -3576,7 +3689,8 @@ function mkdir_fmanager_directory() {
 	user_authentication
 	DIR_PATH=$OPTION3
 	if [ `expr "$DIR_PATH" : ".*[A-Za-z0-9.()~!@$^&+={};-].*"` -gt 0 ]; then
-		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/ebf/"  --header 'Authorization: token '$AUTH_TOKEN'' --header 'Content-Type: application/json' --data-raw '{"path":"'"$DIR_PATH"'"}' )
+		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/ebf/"  --header 'Authorization: token '$AUTH_TOKEN'' --header 'Content-Type: application/json' --data-raw '{"path":"'"$DIR_PATH"'"}' 2> $ERRLOG)
+		check_expired_ssl_cert
 	else
     echo "[ERROR] Directory Name contains special characters"
 		exit 1
@@ -3604,7 +3718,8 @@ function mkdir_fmanager_directory() {
 function rm_fmanager_directory() {
 	user_authentication
 	DIR_PATH=$OPTION3
-	OUTPUT=$(curl ${CURL_ARGS} --request DELETE "$SERVER_URL/api/v0.2/ebf/$USER_NAME/"  --header 'Authorization: token '$AUTH_TOKEN'' --header 'Content-Type: application/json' --data-raw '{"path":"'"$DIR_PATH"'"}' )
+	OUTPUT=$(curl ${CURL_ARGS} --request DELETE "$SERVER_URL/api/v0.2/ebf/$USER_NAME/"  --header 'Authorization: token '$AUTH_TOKEN'' --header 'Content-Type: application/json' --data-raw '{"path":"'"$DIR_PATH"'"}' 2> $ERRLOG)
+	check_expired_ssl_cert
 	RESULT=$(echo $OUTPUT|jq -r .result)
 	MESSAGE=$(echo $OUTPUT|jq -r .message)
 	if [ "$RESULT" == "success" ];then
@@ -3632,7 +3747,8 @@ function upload_fmanager() {
 	JSON_STRING=""
 	if [ -f $SRC_FILE_PATH ];then
 		JSON_STRING="--form file=@$SRC_FILE_PATH --form pathToUploadFile=$DST_FILE_PATH"
-		OUTPUT=$(curl ${CURL_ARGS} --request PUT "$SERVER_URL/api/v0.2/ebf/$USER_NAME/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING )
+		OUTPUT=$(curl ${CURL_ARGS} --request PUT "$SERVER_URL/api/v0.2/ebf/$USER_NAME/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		MESSAGE=$(echo $OUTPUT|jq -r .message)
 		if [ "$RESULT" == "success" ];then
@@ -3676,7 +3792,8 @@ function download_fmanager() {
 		FILE_NAME=$FILE_NAME
 	fi
   if [ "$SRC_FILE_PATH" != "" ];then
-    OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/ebf/$USER_NAME/download/$SRC_FILE_PATH/" --header 'Authorization: token '$AUTH_TOKEN'' --output $FILE_NAME )
+    OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/ebf/$USER_NAME/download/$SRC_FILE_PATH/" --header 'Authorization: token '$AUTH_TOKEN'' --output $FILE_NAME 2> $ERRLOG)
+		check_expired_ssl_cert
 		if [ $? -eq 0 ];then
 			echo "Successfully Downloaded \"$SRC_FILE_PATH\" into \"$FILE_NAME\""
 		else
@@ -3722,7 +3839,8 @@ function uboot_flash(){
 
 	if [ -f $SRC_FILE_PATH ] && [ "$SRC_FILE_PATH" != "" ];then
 		JSON_STRING="--form file=@$SRC_FILE_PATH --form serial_recv_cmd=\"loady\" --form protocol=\"$PROTOCOL\""
-		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/upload/serial/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING )
+		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/upload/serial/" --header 'Authorization: token '$AUTH_TOKEN'' $JSON_STRING 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		MESSAGE=$(echo $OUTPUT|jq -r .message)
 		if [ "$RESULT" == "success" ];then
@@ -3749,7 +3867,8 @@ function uboot_flash(){
 function get_resource(){
 	user_authentication
 	DEVICE=$OPTION
-	OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/$OPTION2/$OPTION3"  --header 'Authorization: token '$AUTH_TOKEN'' )
+	OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/devices/$DEVICE/$OPTION2/$OPTION3"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	check_expired_ssl_cert
 	RESULT=$(echo $OUTPUT|jq -r .result)
 	if [ "$RESULT" == "success" ];then
 		resource_name=$(echo $OUTPUT|jq -r .data[])
@@ -3777,7 +3896,8 @@ function get_resource(){
 function power_measurement_start(){
 	user_authentication
 	RESOURCE_NAME=$OPTION
-	OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/resources/$RESOURCE_NAME/$OPTION2/start-capture/"  --header 'Authorization: token '$AUTH_TOKEN'' )
+	OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/resources/$RESOURCE_NAME/$OPTION2/start-capture/"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	check_expired_ssl_cert
 	RESULT=$(echo $OUTPUT|jq -r .result)
 	if [ "$RESULT" == "success" ];then
 		token=$(echo $OUTPUT|jq -r .data)
@@ -3806,7 +3926,8 @@ function power_measurement_stop(){
 	user_authentication
 	RESOURCE_NAME=$OPTION
 	TOKEN_ID=$OPTION4
-	OUTPUT=$(curl ${CURL_ARGS} --request PUT "$SERVER_URL/api/v0.2/resources/$RESOURCE_NAME/$OPTION2/stop-capture/$OPTION4"  --header 'Authorization: token '$AUTH_TOKEN'' )
+	OUTPUT=$(curl ${CURL_ARGS} --request PUT "$SERVER_URL/api/v0.2/resources/$RESOURCE_NAME/$OPTION2/stop-capture/$OPTION4"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	check_expired_ssl_cert
 	RESULT=$(echo $OUTPUT|jq -r .result)
 	if [ "$RESULT" == "success" ];then
 		echo "$RESULT"
@@ -3831,7 +3952,8 @@ function power_measurement_get_data(){
 	RESOURCE_NAME=$OPTION
 	TOKEN_ID=$OPTION4
 	COUNT=0
-	OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/resources/$RESOURCE_NAME/$OPTION2/get-data/$OPTION4"  --header 'Authorization: token '$AUTH_TOKEN'' )
+	OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/resources/$RESOURCE_NAME/$OPTION2/get-data/$OPTION4"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	check_expired_ssl_cert
 	RESULT=$(echo $OUTPUT|jq -r .result)
 	if [ "$RESULT" == "success" ];then
 	        DATA=$(echo $OUTPUT|jq -r .data)
@@ -3856,7 +3978,8 @@ function power_measurement_delete(){
 	user_authentication
 	RESOURCE_NAME=$OPTION
 	TOKEN_ID=$OPTION4
-	OUTPUT=$(curl ${CURL_ARGS} --request DELETE "$SERVER_URL/api/v0.2/resources/$RESOURCE_NAME/$OPTION2/delete/$OPTION4"  --header 'Authorization: token '$AUTH_TOKEN'' )
+	OUTPUT=$(curl ${CURL_ARGS} --request DELETE "$SERVER_URL/api/v0.2/resources/$RESOURCE_NAME/$OPTION2/delete/$OPTION4"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	check_expired_ssl_cert
 	RESULT=$(echo $OUTPUT|jq -r .result)
 	if [ "$RESULT" == "success" ];then
 		echo "$RESULT"
@@ -3880,7 +4003,8 @@ function camera_screenshot_capture(){
 	user_authentication
 	RESOURCE_NAME=$OPTION
 	if [ "$OPTION4" == "" ] || [ "$OPTION4" == "-o" -a "$OPTION5" != "" ];then
-		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/resources/$RESOURCE_NAME/camera/$OPTION3"  --header 'Authorization: token '$AUTH_TOKEN'' )
+		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/resources/$RESOURCE_NAME/camera/$OPTION3"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		IMAGE_URL=$(echo $OUTPUT|jq -r .data)
 		if [ "$RESULT" == "success" ];then
@@ -3929,7 +4053,8 @@ function camera_video_capture(){
 				exit 1
 			fi
 		fi
-		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/resources/$RESOURCE_NAME/camera/$OPTION3/$DURATION/"  --header 'Authorization: token '$AUTH_TOKEN'' )
+		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/resources/$RESOURCE_NAME/camera/$OPTION3/$DURATION/"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		TOKEN_ID=$(echo $OUTPUT|jq -r .data.token)
 		if [ "$RESULT" == "success" ];then
@@ -3958,7 +4083,8 @@ function camera_captured_video_download(){
 	RESOURCE_NAME=$OPTION
 	TOKEN_ID=$OPTION4
 	if [ "$OPTION5" == "" ] || [ "$OPTION5" == "-o" -a "$OPTION6" != "" ];then
-		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/resources/$RESOURCE_NAME/camera/get-ref/$TOKEN_ID/"  --header 'Authorization: token '$AUTH_TOKEN'' )
+		OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/resources/$RESOURCE_NAME/camera/get-ref/$TOKEN_ID/"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+		check_expired_ssl_cert
 		RESULT=$(echo $OUTPUT|jq -r .result)
 		VIDEO_URL=$(echo $OUTPUT|jq -r .data)
 		if [ "$RESULT" == "success" ];then
