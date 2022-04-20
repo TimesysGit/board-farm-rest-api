@@ -1,0 +1,37 @@
+openapi: 3.0.1
+info:
+  title: Generated for EBF
+  version: '0.2'
+servers:
+- url: https://bfc.timesys.com
+components:
+  securitySchemes:
+    tokenAuth:
+      type: http
+      scheme: token
+security:
+- tokenAuth: []
+paths:
+  /api/v0.2/resources/{ResourceName}/audio/get-data/{token}/:
+    get:
+      tags:
+      - api
+      operationId: api_resources_audio_get_data
+      parameters:
+      - name: ResourceName
+        in: path
+        description: A unique value identifying this Lab resource.
+        required: true
+        schema:
+          type: string
+      - name: token
+        in: path
+        description: A unique value identifying audio instance.
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: ""
+          content:
+            application/octet-stream: {}
