@@ -1033,6 +1033,25 @@ function help_camera(){
 	exit 1
 }
 
+function help_audio_capture() {
+	echo " "
+	echo "Usage:   ebf <resource_name> <resource_type> [OPTION] <token>"
+	echo ""
+	echo "Example 1: ebf AUDIO1 audio start"
+	echo "Example 2: ebf AUDIO1 audio stop 04366c6a-fde2-424d-9aea"
+	echo "Example 3: ebf AUDIO1 audio get-data 04366c6a-fde2-424d-9aea"
+	echo "Example 4: ebf AUDIO1 audio get-data 04366c6a-fde2-424d-9aea -o /tmp/test.wmv"
+	echo "Example 5: ebf AUDIO1 audio delete 04366c6a-fde2-424d-9aea"
+	echo ""
+	echo "Options:"
+	echo "   start       This will start capturing the audio and return a token"
+	echo "   stop        This will stop audio capturing"
+	echo "   get-data    This will download the captured audio file"
+	echo "   delete      This will delete the audio capture logs and data files."
+	echo ""
+	exit 1
+}
+
 function user_authentication() {
   LOGIN=0
   check_dependencies
@@ -4120,6 +4139,122 @@ function camera_captured_video_download(){
 	fi
 }
 
+function audio_capture_start(){
+	user_authentication
+	RESOURCE_NAME=$OPTION
+	OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/resources/$RESOURCE_NAME/$OPTION2/start-capture/"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	check_expired_ssl_cert
+	RESULT=$(echo $OUTPUT|jq -r .result)
+	if [ "$RESULT" == "success" ];then
+		token=$(echo $OUTPUT|jq -r .data)
+		if [ "$OPTION4" == "-q" ];then
+			echo "$token"
+		else
+			echo "$token"
+		fi
+	else
+		MESSAGE=$(echo $OUTPUT|jq -r .message)
+		if [ "$RESULT" == "" ];then
+			echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
+			exit 1
+		fi
+		FAILURE_MSG=$(echo $MESSAGE|grep -ow "No Device matches")
+		if [ "$FAILURE_MSG" ];then
+			echo "[ERROR] Device $DEVICE doesn't exsist"
+		else
+			echo $MESSAGE
+		fi
+		exit 1
+	fi
+}
+
+function audio_capture_stop(){
+	user_authentication
+	RESOURCE_NAME=$OPTION
+	TOKEN_ID=$OPTION4
+	OUTPUT=$(curl ${CURL_ARGS} --request PUT "$SERVER_URL/api/v0.2/resources/$RESOURCE_NAME/$OPTION2/stop-capture/$OPTION4"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	check_expired_ssl_cert
+	RESULT=$(echo $OUTPUT|jq -r .result)
+	if [ "$RESULT" == "success" ];then
+		echo "$RESULT"
+	else
+		MESSAGE=$(echo $OUTPUT|jq -r .message)
+		if [ "$RESULT" == "" ];then
+			echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
+			exit 1
+		fi
+		FAILURE_MSG=$(echo $MESSAGE|grep -ow "No Device matches")
+		if [ "$FAILURE_MSG" ];then
+			echo "[ERROR] Device $DEVICE doesn't exsist"
+		else
+			echo $MESSAGE
+		fi
+		exit 1
+	fi
+}
+
+
+function audio_capture_get_data(){
+	user_authentication
+	RESOURCE_NAME=$OPTION
+	TOKEN_ID=$OPTION4
+	COUNT=0
+
+	if [ "$OPTION5" == "" ];then
+	  DST_FILE_PATH="test-$TOKEN_ID.wmv"
+	elif [ "$OPTION5" == "-o" -a "$OPTION6" != "" ];then
+	  DST_FILE_PATH=${OPTION6%/}
+	  if [ ! -d "$DST_FILE_PATH" ];then
+		PARENT_DST_FILE_PATH=${DST_FILE_PATH%/*}
+		if [ ! -d "$PARENT_DST_FILE_PATH" ];then
+		 echo "[ERROR] Destination download path is not Valid!"
+		 help_audio_capture
+		 exit 1
+		fi
+	  else
+		  DST_FILE_PATH="$DST_FILE_PATH/"test-$TOKEN_ID.wmv""
+	  fi
+	else
+	  help_audio_capture
+	fi
+    check_expired_ssl_cert
+	OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/resources/$RESOURCE_NAME/$OPTION2/get-data/$OPTION4"  --header 'Authorization: token '$AUTH_TOKEN'' --output $DST_FILE_PATH 2> $ERRLOG)
+	FILE_SIZE=$(du -sh $DST_FILE_PATH|awk '{print $1}')
+	if [ "$FILE_SIZE" == "4.0K" ];then
+	    echo "[ERROR] Couldn't download the file, please check the token-id"
+	    rm -rf $DST_FILE_PATH > /dev/null
+	    exit 1
+	else
+	    echo "Successfully Downloaded the captured audio file $DST_FILE_PATH"
+	    exit 0
+	fi
+}
+
+function audio_capture_delete(){
+	user_authentication
+	RESOURCE_NAME=$OPTION
+	TOKEN_ID=$OPTION4
+	OUTPUT=$(curl ${CURL_ARGS} --request DELETE "$SERVER_URL/api/v0.2/resources/$RESOURCE_NAME/$OPTION2/delete/$OPTION4"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	check_expired_ssl_cert
+	RESULT=$(echo $OUTPUT|jq -r .result)
+	if [ "$RESULT" == "success" ];then
+		echo "$RESULT"
+	else
+		MESSAGE=$(echo $OUTPUT|jq -r .message)
+		if [ "$RESULT" == "" ];then
+			echo "[ERROR] Couldn't fetch data. Check Your Internet Connection"
+			exit 1
+		fi
+		FAILURE_MSG=$(echo $MESSAGE|grep -ow "No Device matches")
+		if [ "$FAILURE_MSG" ];then
+			echo "[ERROR] Device $DEVICE doesn't exsist"
+		else
+			echo $MESSAGE
+		fi
+		exit 1
+	fi
+}
+
 
 if [ $1 = "--debug" ] ; then
     CURL_ARGS="${CURL_ARGS} --trace-ascii /tmp/curl-trace.log"
@@ -4813,6 +4948,21 @@ case "$OPTION" in
 					echo "[ERROR] Invalid Option"
 					echo ""
 					help_camera
+				fi
+				;;
+			audio)
+				if [ "$OPTION3" == "start" ];then
+					audio_capture_start
+				elif [ "$OPTION3" == "stop" ] && [ "$OPTION4" != "" ];then
+					audio_capture_stop
+				elif [ "$OPTION3" == "get-data" ] && [ "$OPTION4" != "" ];then
+					audio_capture_get_data
+				elif [ "$OPTION3" == "delete" ] && [ "$OPTION4" != "" ];then
+					audio_capture_delete
+				else
+					echo "[ERROR] Invalid Option"
+					echo ""
+					help_audio_capture
 				fi
 				;;
       *)
