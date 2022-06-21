@@ -5,7 +5,7 @@ OPTION2=""
 SERVER_URL=""
 USER_NAME=""
 GPIO_PIN_DATA=""
-VERSION="1.0.3-dev"
+VERSION="1.0.3"
 CURL_ARGS="-s -k --location"
 ERRLOG=/tmp/errlog
 SSL_CERT=0
@@ -243,9 +243,9 @@ function help_device_portfw_list() {
 
 function help_device_portfw_add() {
 	echo " "
-	echo " Usage  : ebf <device name> portfw add <device-ip> <dut-port> <zombie-port> <protocol>"
+	echo " Usage  : ebf <device name> portfw add <device-ip> <dut-port> <zombie-port> <protocol> [user/group/all]"
 	echo " Example:"
-	echo "          ebf bbb01 portfw add 192.168.111.10 22 8022 tcp"
+	echo "          ebf bbb01 portfw add 192.168.111.10 22 8022 tcp group [Default:"user"]"
   echo ""
   exit 1
 }
@@ -1039,14 +1039,14 @@ function help_audio_capture() {
 	echo ""
 	echo "Example 1: ebf AUDIO1 audio start"
 	echo "Example 2: ebf AUDIO1 audio stop 04366c6a-fde2-424d-9aea"
-	echo "Example 3: ebf AUDIO1 audio get-data 04366c6a-fde2-424d-9aea"
-	echo "Example 4: ebf AUDIO1 audio get-data 04366c6a-fde2-424d-9aea -o /tmp/test.wmv"
+	echo "Example 3: ebf AUDIO1 audio get-ref 04366c6a-fde2-424d-9aea"
+	echo "Example 4: ebf AUDIO1 audio get-ref 04366c6a-fde2-424d-9aea -o /tmp/test.wmv"
 	echo "Example 5: ebf AUDIO1 audio delete 04366c6a-fde2-424d-9aea"
 	echo ""
 	echo "Options:"
 	echo "   start       This will start capturing the audio and return a token"
 	echo "   stop        This will stop audio capturing"
-	echo "   get-data    This will download the captured audio file"
+	echo "   get-ref     This will provide the link of captured audio file"
 	echo "   delete      This will delete the audio capture logs and data files."
 	echo ""
 	exit 1
@@ -1569,8 +1569,23 @@ function portfw_add() {
 	DUT_PORT=$OPTION5
 	ZOMBIE_PORT=$OPTION6
 	PROTOCOL=$OPTION7
-	if [ "$OPTION8" == "" ] && [ "$PROTOCOL" != "" ];then
-		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/portfw/nat/"  --header 'Content-Type: application/json' --header 'Authorization: token '$AUTH_TOKEN'' --data-raw '{ "device_ip":"'"$DEVICE_IP"'", "dut_port":"'"$DUT_PORT"'", "zombie_port":"'"$ZOMBIE_PORT"'", "pcol":"'"$PROTOCOL"'" }' 2> $ERRLOG)
+	USER_GROUP=0
+	if [ "$OPTION8" != "" ];then
+	  OPTION8=$(echo "$OPTION8" | sed -e 's/\(.*\)/\L\1/')
+	  if [ "$OPTION8" == "user" ];then
+	    USER_GROUP=0
+	  elif [ "$OPTION8" == "group" ];then
+	    USER_GROUP=1
+	  elif [ "$OPTION8" == "all" ];then
+	    USER_GROUP=2
+	  else
+	    help_device_portfw_add
+		  exit 1
+		fi
+	fi
+
+	if [ "$OPTION9" == "" ] && [ "$PROTOCOL" != "" ];then
+		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/portfw/nat/"  --header 'Content-Type: application/json' --header 'Authorization: token '$AUTH_TOKEN'' --data-raw '{ "device_ip":"'"$DEVICE_IP"'", "dut_port":"'"$DUT_PORT"'", "zombie_port":"'"$ZOMBIE_PORT"'", "pcol":"'"$PROTOCOL"'", "persist_by":'$USER_GROUP', "reconnect":false }' 2> $ERRLOG)
 		check_expired_ssl_cert
   	RESULT=$(echo $OUTPUT|jq -r .result)
 	else
@@ -4146,12 +4161,8 @@ function audio_capture_start(){
 	check_expired_ssl_cert
 	RESULT=$(echo $OUTPUT|jq -r .result)
 	if [ "$RESULT" == "success" ];then
-		token=$(echo $OUTPUT|jq -r .data)
-		if [ "$OPTION4" == "-q" ];then
-			echo "$token"
-		else
-			echo "$token"
-		fi
+		token=$(echo $OUTPUT|jq -r .data|jq -r .token)
+		echo $token
 	else
 		MESSAGE=$(echo $OUTPUT|jq -r .message)
 		if [ "$RESULT" == "" ];then
@@ -4198,35 +4209,41 @@ function audio_capture_get_data(){
 	user_authentication
 	RESOURCE_NAME=$OPTION
 	TOKEN_ID=$OPTION4
-	COUNT=0
 
-	if [ "$OPTION5" == "" ];then
-	  DST_FILE_PATH="test-$TOKEN_ID.wmv"
-	elif [ "$OPTION5" == "-o" -a "$OPTION6" != "" ];then
-	  DST_FILE_PATH=${OPTION6%/}
-	  if [ ! -d "$DST_FILE_PATH" ];then
-		PARENT_DST_FILE_PATH=${DST_FILE_PATH%/*}
-		if [ ! -d "$PARENT_DST_FILE_PATH" ];then
-		 echo "[ERROR] Destination download path is not Valid!"
-		 help_audio_capture
-		 exit 1
-		fi
-	  else
-		  DST_FILE_PATH="$DST_FILE_PATH/"test-$TOKEN_ID.wmv""
-	  fi
-	else
-	  help_audio_capture
-	fi
+	if [ "$OPTION5" == "" ] || [ "$OPTION5" == "-o" -a "$OPTION6" != "" ];then
     check_expired_ssl_cert
-	OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/resources/$RESOURCE_NAME/$OPTION2/get-data/$OPTION4"  --header 'Authorization: token '$AUTH_TOKEN'' --output $DST_FILE_PATH 2> $ERRLOG)
-	FILE_SIZE=$(du -sh $DST_FILE_PATH|awk '{print $1}')
-	if [ "$FILE_SIZE" == "4.0K" ];then
-	    echo "[ERROR] Couldn't download the file, please check the token-id"
-	    rm -rf $DST_FILE_PATH > /dev/null
-	    exit 1
+	  OUTPUT=$(curl ${CURL_ARGS} --request GET "$SERVER_URL/api/v0.2/resources/$RESOURCE_NAME/$OPTION2/get-ref/$OPTION4"  --header 'Authorization: token '$AUTH_TOKEN'' 2> $ERRLOG)
+	  RESULT=$(echo $OUTPUT|jq -r .result 2> $ERRLOG)
+		AUDIO_URL=$(echo $OUTPUT|jq -r .data 2> $ERRLOG)
+		if [ "$RESULT" == "success" ];then
+			if [ "$OPTION6" != "" ];then
+				curl ${CURL_ARGS} -o $OPTION6 $AUDIO_URL
+				if [ $? -ne 0 ];then
+					echo "[ERROR] FilePath doesn't exist $OPTION6"
+					exit 1
+				else
+					echo "Successfully Downloaded the file $OPTION6"
+					exit 0
+				fi
+			else
+				echo "$AUDIO_URL"
+			fi
+		else
+			MESSAGE=$(echo $OUTPUT|jq -r .message 2> $ERRLOG)
+			if [ "$RESULT" == "" ];then
+				echo "[ERROR] Couldn't fetch data. Check Your token-id"
+				exit 1
+			fi
+			FAILURE_MSG=$(echo $MESSAGE|grep -ow "No Device matches")
+			if [ "$FAILURE_MSG" ];then
+				echo "[ERROR] Resource $DEVICE doesn't exsist"
+			else
+				echo $MESSAGE
+			fi
+			exit 1
+		fi
 	else
-	    echo "Successfully Downloaded the captured audio file $DST_FILE_PATH"
-	    exit 0
+		help_audio_capture
 	fi
 }
 
@@ -4955,7 +4972,7 @@ case "$OPTION" in
 					audio_capture_start
 				elif [ "$OPTION3" == "stop" ] && [ "$OPTION4" != "" ];then
 					audio_capture_stop
-				elif [ "$OPTION3" == "get-data" ] && [ "$OPTION4" != "" ];then
+				elif [ "$OPTION3" == "get-ref" ] && [ "$OPTION4" != "" ];then
 					audio_capture_get_data
 				elif [ "$OPTION3" == "delete" ] && [ "$OPTION4" != "" ];then
 					audio_capture_delete
