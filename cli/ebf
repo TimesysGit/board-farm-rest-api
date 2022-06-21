@@ -5,7 +5,7 @@ OPTION2=""
 SERVER_URL=""
 USER_NAME=""
 GPIO_PIN_DATA=""
-VERSION="1.0.3-dev"
+VERSION="1.0.3"
 CURL_ARGS="-s -k --location"
 ERRLOG=/tmp/errlog
 SSL_CERT=0
@@ -243,9 +243,9 @@ function help_device_portfw_list() {
 
 function help_device_portfw_add() {
 	echo " "
-	echo " Usage  : ebf <device name> portfw add <device-ip> <dut-port> <zombie-port> <protocol>"
+	echo " Usage  : ebf <device name> portfw add <device-ip> <dut-port> <zombie-port> <protocol> [user/group/all]"
 	echo " Example:"
-	echo "          ebf bbb01 portfw add 192.168.111.10 22 8022 tcp"
+	echo "          ebf bbb01 portfw add 192.168.111.10 22 8022 tcp group [Default:"user"]"
   echo ""
   exit 1
 }
@@ -1569,8 +1569,23 @@ function portfw_add() {
 	DUT_PORT=$OPTION5
 	ZOMBIE_PORT=$OPTION6
 	PROTOCOL=$OPTION7
-	if [ "$OPTION8" == "" ] && [ "$PROTOCOL" != "" ];then
-		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/portfw/nat/"  --header 'Content-Type: application/json' --header 'Authorization: token '$AUTH_TOKEN'' --data-raw '{ "device_ip":"'"$DEVICE_IP"'", "dut_port":"'"$DUT_PORT"'", "zombie_port":"'"$ZOMBIE_PORT"'", "pcol":"'"$PROTOCOL"'" }' 2> $ERRLOG)
+	USER_GROUP=0
+	if [ "$OPTION8" != "" ];then
+	  OPTION8=$(echo "$OPTION8" | sed -e 's/\(.*\)/\L\1/')
+	  if [ "$OPTION8" == "user" ];then
+	    USER_GROUP=0
+	  elif [ "$OPTION8" == "group" ];then
+	    USER_GROUP=1
+	  elif [ "$OPTION8" == "all" ];then
+	    USER_GROUP=2
+	  else
+	    help_device_portfw_add
+		  exit 1
+		fi
+	fi
+
+	if [ "$OPTION9" == "" ] && [ "$PROTOCOL" != "" ];then
+		OUTPUT=$(curl ${CURL_ARGS} --request POST "$SERVER_URL/api/v0.2/devices/$DEVICE/portfw/nat/"  --header 'Content-Type: application/json' --header 'Authorization: token '$AUTH_TOKEN'' --data-raw '{ "device_ip":"'"$DEVICE_IP"'", "dut_port":"'"$DUT_PORT"'", "zombie_port":"'"$ZOMBIE_PORT"'", "pcol":"'"$PROTOCOL"'", "persist_by":'$USER_GROUP', "reconnect":false }' 2> $ERRLOG)
 		check_expired_ssl_cert
   	RESULT=$(echo $OUTPUT|jq -r .result)
 	else
