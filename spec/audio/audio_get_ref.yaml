@@ -12,11 +12,11 @@ components:
 security:
 - tokenAuth: []
 paths:
-  /api/v0.2/resources/{ResourceName}/audio/get-data/{token}/:
+  /api/v0.2/resources/{ResourceName}/audio/get-ref/{token}/:
     get:
       tags:
       - api
-      operationId: api_resources_audio_get_data
+      operationId: api_resources_audio_get_ref
       parameters:
       - name: ResourceName
         in: path
@@ -34,4 +34,18 @@ paths:
         200:
           description: ""
           content:
-            application/octet-stream: {}
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    description: success/fail
+                  message:
+                    type: string
+                    description: failure reason
+                  data:
+                    type: string
+                    description: Audio file URL
+                required:
+                  - result
